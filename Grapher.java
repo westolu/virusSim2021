@@ -43,6 +43,7 @@ public class Grapher implements Runnable{
     double dx;
     double dy;
     double distance;
+    private final long FRAME_TIME = 10000000; //this is in nanoseconds
 
     Scanner input = new Scanner(System.in);
     Preferences prefs = new Preferences();
@@ -67,15 +68,18 @@ public class Grapher implements Runnable{
         for(int z=0; z<8; z++){
             System.out.println(prompts[z]);
             int temp = input.nextInt();
+            if(temp > 0){
+            }else{
             if(temp != -1){
                 prefs.vars[z] = temp;
             }
+        }
         }
 
         // String[][] world = new String[prefs.vars[1]][prefs.vars[2]];
         // FileWriter writer = new FileWriter(file);
         display = new Display(title, prefs.vars[1], prefs.vars[2]);
-        ControlPanel control = new ControlPanel();
+        //ControlPanel control = new ControlPanel();
 
         xPos = new int[prefs.vars[0]];
         yPos = new int[prefs.vars[0]];
@@ -93,11 +97,11 @@ public class Grapher implements Runnable{
         }
         for(int j = 0; j < prefs.vars[4]; j++){
             infected[j] = true;
-            System.out.println("ow ow");
         }
     }
 
     public void tickRun(){
+        long startTime = System.nanoTime();
         try {
             for(int i = 0; i < prefs.vars[0]; i++){
                 xPos[i] = xPos[i] + xVel[i];
@@ -114,23 +118,30 @@ public class Grapher implements Runnable{
                 if(yPos[i] <= 0){
                     yVel[i] = yVel[i] * -1;
                 }
-                Thread.sleep(50);
-                for(int j = 0; j<prefs.vars[0]; j++){
-                    dx = ((xPos[i] + ovalDiam/2) - (xPos[j] + ovalDiam/2));
-                    dy = ((yPos[i] + ovalDiam/2) - (yPos[j] + ovalDiam/2));
-                    distance = Math.sqrt(dx * dx + dy * dy);
-                    if(infected[i] || infected[j]){
-                        if(distance < ovalDiam/2){
-                            infected[i] = true;
-                            infected[j] = true;
-                            System.out.println("pow pow " + i + " " + j);
-                            System.out.println(distance + " " + ovalDiam/2);
-                            System.out.println(dx + " " + dy);
+                for(int j = 0; j<prefs.vars[0]; j++){ //hit detection
+                    if(i != j){
+                        dx = (xPos[i] + ovalDiam/2) - (xPos[j] + ovalDiam/2); //find difference in x
+                        dy = (yPos[i] + ovalDiam/2) - (yPos[j] + ovalDiam/2); //find difference in y
+                        distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
+                        if(infected[i]){
+                            if(distance < ovalDiam){
+                                infected[i] = true;
+                                infected[j] = true;
+                            }else{
+                            }
                         }
                     }
                 }
             }
-
+            long endTime = System.nanoTime();
+            long processTime = endTime - startTime;
+            long timeToWait = FRAME_TIME - processTime;
+            if(timeToWait <= 0){
+                System.out.println("uh oh something has gone wrong, the simulation is taking too long");
+                timeToWait = 0;
+            }
+            timeToWait = timeToWait/1000000; //convert to milliseconds
+            Thread.sleep(timeToWait);
             render();
         } catch (Exception e) {
             System.out.println("An error occurred.");
@@ -151,7 +162,7 @@ public class Grapher implements Runnable{
 
         //draw people
         for(int i = 0; i < prefs.vars[0]; i++){
-            if(infected[i] = true){
+            if(infected[i] == true){
                 g.setColor(Color.red);
             }else{
                 g.setColor(Color.green);
@@ -170,7 +181,13 @@ public class Grapher implements Runnable{
     }
 
     public void run(){
-
+        try{
+            render();
+            Thread.sleep(1000);
+        }catch (Exception e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
         while(running){
             tickRun();
 
