@@ -28,18 +28,18 @@ public class Grapher implements Runnable{
     private BufferStrategy bs;
     private Graphics g;
 
-    long delay = 10;
-    int minVel = 1;
+    int minVel = 1;     //HERE i make all my arrays/constants
     int maxVel = 5;
     int ovalDiam = 50;
     int eyeWidth = ovalDiam/5;
     int eyeHeight = (ovalDiam*2)/5;
 
-    private int xPos[];
+    private int xPos[];         //HERE i make all my arrays/constants
     private int xVel[];
     private int yPos[];
     private int yVel[];
     private boolean infected[];
+    private long infectedTime[];
     double dx;
     double dy;
     double distance;
@@ -62,18 +62,17 @@ public class Grapher implements Runnable{
         System.out.println("presets are: population size of 50, world width of 10, world height of 10, run for 10 days, 10 people to start infected,");
         System.out.println("people are infected for 10 days before being cured, and are immune for 3 days after being cured, repeat simulation 20 times.");
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter days to run", "enter number of people to start as infected", 
-                "enter how long people are infected for", "enter how long people are immune for after they are cured", "enter how many times to repeat"};
+                "enter how long people are infected for, in cycles", "enter how long people are immune for after they are cured", "enter how many times to repeat"};
         File file = new File ("output.txt");
 
         for(int z=0; z<8; z++){
             System.out.println(prompts[z]);
             int temp = input.nextInt();
-            if(temp > 0){
-            }else{
-            if(temp != -1){
+
+            if(temp != -1){ //input checking
                 prefs.vars[z] = temp;
             }
-        }
+
         }
 
         // String[][] world = new String[prefs.vars[1]][prefs.vars[2]];
@@ -81,19 +80,32 @@ public class Grapher implements Runnable{
         display = new Display(title, prefs.vars[1], prefs.vars[2]);
         //ControlPanel control = new ControlPanel();
 
-        xPos = new int[prefs.vars[0]];
+        xPos = new int[prefs.vars[0]]; //create all my arrays to be full of people
         yPos = new int[prefs.vars[0]];
         xVel = new int[prefs.vars[0]];
         yVel = new int[prefs.vars[0]];
         infected = new boolean[prefs.vars[0]];
+        infectedTime = new long[prefs.vars[0]];
 
         for(int i = 0; i<prefs.vars[0]; i++){
-            xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - ovalDiam);
+            xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - ovalDiam); //randomise positions and velocities between bounds
             yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - ovalDiam);
             xVel[i] = ThreadLocalRandom.current().nextInt(minVel, maxVel);
             yVel[i] = ThreadLocalRandom.current().nextInt(minVel, maxVel);
             infected[i] = false;
+            for(int q = 0; q < prefs.vars[0]; q++){
+                for(int y = 0; y < prefs.vars[0]; y++){    
+                    dx = (xPos[q] + ovalDiam/2) - (xPos[y] + ovalDiam/2); //find difference in x
+                    dy = (yPos[q] + ovalDiam/2) - (yPos[y] + ovalDiam/2); //find difference in y
+                    distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
 
+                    if(distance < ovalDiam){
+                        xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - ovalDiam); //randomise positions and velocities between bounds
+                        yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - ovalDiam);
+                    }else{
+                    }
+                }
+            }
         }
         for(int j = 0; j < prefs.vars[4]; j++){
             infected[j] = true;
@@ -123,14 +135,39 @@ public class Grapher implements Runnable{
                         dx = (xPos[i] + ovalDiam/2) - (xPos[j] + ovalDiam/2); //find difference in x
                         dy = (yPos[i] + ovalDiam/2) - (yPos[j] + ovalDiam/2); //find difference in y
                         distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
-                        if(infected[i]){
+                        if(infected[i] || infected[j]){
                             if(distance < ovalDiam){
                                 infected[i] = true;
                                 infected[j] = true;
+                                int tempXVel  = xVel[i];
+                                int tempYVel  = yVel[i];
+                                xVel[i] = xVel[j];
+                                yVel[i] = yVel[j];
+                                xVel[j] = tempXVel;
+                                yVel[j] = tempYVel;
+                                infectedTime[i] = prefs.vars[5];
+                                infectedTime[j] = prefs.vars[5];
+                            }else{
+                            }
+                        }else{
+                            if(distance < ovalDiam){
+                                int tempXVel  = xVel[i];
+                                int tempYVel  = yVel[i];
+                                xVel[i] = xVel[j];
+                                yVel[i] = yVel[j];
+                                xVel[j] = tempXVel;
+                                yVel[j] = tempYVel;
                             }else{
                             }
                         }
                     }
+                }
+            }
+            for(int q=0; q<prefs.vars[0]; q++){
+                if(infectedTime[q] - 1 <= 0){
+                    infected[q] = true;
+                }else{
+                    infectedTime[q]--;
                 }
             }
             long endTime = System.nanoTime();
