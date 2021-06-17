@@ -3,18 +3,18 @@ import java.awt.*;
 import java.util.*;
 import java.lang.*;
 import java.io.File;
-import java.io.FileWriter;
 import javax.swing.*;
 import java.applet.*;
 import java.awt.geom.*;
 import java.awt.image.*;
+import java.io.FileWriter;
 import java.util.concurrent.*;
 
 /**
  * Write a description of class Grapher here.
  *
- * @author (your name)
- * @version (a version number or a date)
+ * @author (Luke Weston)
+ * @version (20.0)
  */
 public class Grapher implements Runnable{
     private Display display;
@@ -33,6 +33,9 @@ public class Grapher implements Runnable{
     int ovalDiam = 50;
     int eyeWidth = ovalDiam/5;
     int eyeHeight = (ovalDiam*2)/5;
+    int smileAngle;
+    int smileXPos;
+    int smileYPos;
 
     private int xPos[];         //HERE i make all my arrays/constants
     private int xVel[];
@@ -62,7 +65,7 @@ public class Grapher implements Runnable{
         System.out.println("presets are: population size of 50, world width of 10, world height of 10, run for 10 days, 10 people to start infected,");
         System.out.println("people are infected for 10 days before being cured, and are immune for 3 days after being cured, repeat simulation 20 times.");
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter days to run", "enter number of people to start as infected", 
-                "enter how long people are infected for, in cycles", "enter how long people are immune for after they are cured", "enter how many times to repeat"};
+                "enter how long people are infected for, in cycles", "enter how long people are immune for after they are cured, in cycles", "enter how many times to repeat"};
         File file = new File ("output.txt");
 
         for(int z=0; z<8; z++){
@@ -93,13 +96,13 @@ public class Grapher implements Runnable{
             xVel[i] = ThreadLocalRandom.current().nextInt(minVel, maxVel);
             yVel[i] = ThreadLocalRandom.current().nextInt(minVel, maxVel);
             infected[i] = false;
+            infectedTime[i] = 0;
             for(int q = 0; q < prefs.vars[0]; q++){
                 for(int y = 0; y < prefs.vars[0]; y++){    
                     dx = (xPos[q] + ovalDiam/2) - (xPos[y] + ovalDiam/2); //find difference in x
                     dy = (yPos[q] + ovalDiam/2) - (yPos[y] + ovalDiam/2); //find difference in y
                     distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
-
-                    if(distance < ovalDiam){
+                    if(distance <= ovalDiam){
                         xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - ovalDiam); //randomise positions and velocities between bounds
                         yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - ovalDiam);
                     }else{
@@ -109,6 +112,7 @@ public class Grapher implements Runnable{
         }
         for(int j = 0; j < prefs.vars[4]; j++){
             infected[j] = true;
+            infectedTime[j] = prefs.vars[5];
         }
     }
 
@@ -120,22 +124,26 @@ public class Grapher implements Runnable{
                 yPos[i] = yPos[i] + yVel[i];
                 if(xPos[i] >= prefs.vars[1] - ovalDiam){
                     xVel[i] = xVel[i] * -1;
+                    xPos[i] = prefs.vars[1] - ovalDiam;
                 }
                 if(yPos[i] >= prefs.vars[2] - ovalDiam){
                     yVel[i] = yVel[i] * -1;
+                    yPos[i] = prefs.vars[2] - ovalDiam;
                 }
                 if(xPos[i] <= 0){
                     xVel[i] = xVel[i] * -1;
+                    xPos[i] = 5;
                 }
                 if(yPos[i] <= 0){
                     yVel[i] = yVel[i] * -1;
+                    yPos[i] = 5;
                 }
                 for(int j = 0; j<prefs.vars[0]; j++){ //hit detection
                     if(i != j){
                         dx = (xPos[i] + ovalDiam/2) - (xPos[j] + ovalDiam/2); //find difference in x
                         dy = (yPos[i] + ovalDiam/2) - (yPos[j] + ovalDiam/2); //find difference in y
-                        distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
-                        if(infected[i] || infected[j]){
+                        distance = Math.sqrt(dx * dx + dy * dy) + 5; //find distance between using pythag
+                        if(infected[i] || infected[j] && infectedTime[i] >= 0 && infectedTime[i] >= 0){
                             if(distance < ovalDiam){
                                 infected[i] = true;
                                 infected[j] = true;
@@ -164,9 +172,14 @@ public class Grapher implements Runnable{
                 }
             }
             for(int q=0; q<prefs.vars[0]; q++){
-                if(infectedTime[q] - 1 <= 0){
-                    infected[q] = true;
-                }else{
+                if(infectedTime[q] == 0){
+                    infected[q] = false;
+                    infectedTime[q] = -prefs.vars[6];
+                }else if(infectedTime[q] > 0){
+                    infectedTime[q]--;
+                }else if(infectedTime[q] == -1){
+                    infectedTime[q] = 0;
+                }else if(infectedTime[q] < -1){
                     infectedTime[q]--;
                 }
             }
@@ -195,24 +208,26 @@ public class Grapher implements Runnable{
         g = bs.getDrawGraphics();
 
         //clear screen
-        g.clearRect(0, 0, prefs.vars[1], prefs.vars[2]);
+        g.clearRect(0, 0, 2500, 2500);
 
         //draw people
         for(int i = 0; i < prefs.vars[0]; i++){
             if(infected[i] == true){
                 g.setColor(Color.red);
+                smileAngle = 0;
+                smileYPos = yPos[i]+30;
             }else{
                 g.setColor(Color.green);
+                smileAngle = 180;
+                smileYPos = yPos[i]+10;
             }
             g.fillOval(xPos[i], yPos[i], ovalDiam, ovalDiam);
             g.setColor(Color.black);
-
+            //g.setStroke(new BasicStroke(1));
             g.fillOval(xPos[i]+10, yPos[i]+10, eyeWidth, eyeHeight);
             g.fillOval(xPos[i]+32, yPos[i]+10, eyeWidth, eyeHeight);
-            g.drawArc(xPos[i]+10, yPos[i]+15, 32, 30, 180, 180);
+            g.drawArc(xPos[i]+10, smileYPos, 32, 30, smileAngle, 180);
         }
-
-        //draw ellipse
         bs.show();
         g.dispose();
     }

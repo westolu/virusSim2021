@@ -5,7 +5,7 @@
  */
 public class Preferences
 {
-    public int[] vars = new int[] {50, 10, 10, 10, 10, 10, 3, 20};
+    public int[] vars = new int[] {10, 600, 600, 1, 1, 150, 100, 20};
     public Preferences()
     {
         
