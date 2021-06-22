@@ -14,7 +14,7 @@ import java.util.concurrent.*;
  * Write a description of class Grapher here.
  *
  * @author (Luke Weston)
- * @version (20.0)
+ * @version (22.0)
  */
 public class Grapher implements Runnable{
     private Display display;
@@ -44,10 +44,11 @@ public class Grapher implements Runnable{
     private int yVel[];
     private boolean infected[];
     private long infectedTime[];
+    private boolean immune[]; // this variable is just for coloring the people if they are immune
     private double dx;
     private double dy;
     private double distance;
-    private final long FRAME_TIME = 10000000; //this is in nanoseconds
+    private final long FRAME_TIME = 100000000; //this is in nanoseconds
 
     Scanner input = new Scanner(System.in);
     Preferences prefs = new Preferences();
@@ -72,9 +73,10 @@ public class Grapher implements Runnable{
         boolean inputCheck = true;
         try{
             inputCheck = Boolean.parseBoolean(input.nextLine());
+            System.out.println(inputCheck);
         }catch(Exception e){
         }
-        if(inputCheck != true){
+        if(inputCheck != false){
             for(int z=0; z<8; z++){
                 System.out.println(prompts[z]);
                 Integer temp = null;
@@ -103,6 +105,7 @@ public class Grapher implements Runnable{
         yVel = new int[prefs.vars[0]];
         infected = new boolean[prefs.vars[0]];
         infectedTime = new long[prefs.vars[0]];
+        immune = new boolean[prefs.vars[0]];
 
         for(int i = 0; i<prefs.vars[0]; i++){
             xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - OVAL_DIAM); //randomise positions and velocities between bounds
@@ -111,6 +114,7 @@ public class Grapher implements Runnable{
             yVel[i] = ThreadLocalRandom.current().nextInt(MIN_VEL, MAX_VEL);
             infected[i] = false;
             infectedTime[i] = 0;
+            immune[i] = false;
             for(int q = 0; q < prefs.vars[0]; q++){
                 for(int y = 0; y < prefs.vars[0]; y++){    
                     dx = (xPos[q] + OVAL_DIAM/2) - (xPos[y] + OVAL_DIAM/2); //find difference in x
@@ -157,7 +161,7 @@ public class Grapher implements Runnable{
                         dx = (xPos[i] + OVAL_DIAM/2) - (xPos[j] + OVAL_DIAM/2); //find difference in x
                         dy = (yPos[i] + OVAL_DIAM/2) - (yPos[j] + OVAL_DIAM/2); //find difference in y
                         distance = Math.sqrt(dx * dx + dy * dy) + 5; //find distance between using pythag
-                        if(infectedTime[i] >= 0 && infectedTime[i] >= 0 && infected[i] || infected[j]){
+                        if(immune[i] == false && immune[j] == false && infected[i] || infected[j]){
                             if(distance < OVAL_DIAM){
                                 infected[i] = true;
                                 infected[j] = true;
@@ -186,17 +190,20 @@ public class Grapher implements Runnable{
                 }
             }
             for(int q=0; q<prefs.vars[0]; q++){
-                if(infectedTime[q] == 0){
+                if(infectedTime[q] == 1){
                     infected[q] = false;
                     infectedTime[q] = -prefs.vars[6];
+                    immune[q] = true;
                 }else if(infectedTime[q] > 0){
                     infectedTime[q]--;
                 }else if(infectedTime[q] == -1){
                     infectedTime[q] = 0;
+                    immune[q] = false;
                 }else if(infectedTime[q] < -1){
-                    infectedTime[q]--;
+                    infectedTime[q]++;
                 }
             }
+            System.out.println(infectedTime[0] + " " + infectedTime[1]);
             long endTime = System.nanoTime();
             long processTime = endTime - startTime;
             long timeToWait = FRAME_TIME - processTime;
@@ -232,6 +239,10 @@ public class Grapher implements Runnable{
                 g.setColor(Color.red);
                 smileAngle = 0;
                 smileYPos = yPos[i]+30;
+            }else if(immune[i] == true){ 
+                g.setColor(Color.blue);
+                smileAngle = 180;
+                smileYPos = yPos[i]+10;
             }else{
                 g.setColor(Color.green);
                 smileAngle = 180;
