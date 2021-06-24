@@ -14,7 +14,7 @@ import java.util.concurrent.*;
  * Write a description of class Grapher here.
  *
  * @author (Luke Weston)
- * @version (22.0)
+ * @version (23.0)
  */
 public class Grapher implements Runnable{
     private Display display;
@@ -27,17 +27,17 @@ public class Grapher implements Runnable{
 
     private BufferStrategy bs;
     private Graphics g;
-    
-    private final int MIN_VEL = 1;     //HERE i make all my arrays/constants
-    private final int MAX_VEL = 5;
+
+    private final int MIN_VEL = -3;     //HERE i make all my arrays/constants
+    private final int MAX_VEL = 3;
     private final int OVAL_DIAM = 50;
     private final int EYE_WIDTH = OVAL_DIAM/5;
     private final int EYE_HEIGHT = (OVAL_DIAM*2)/5;
     int smileAngle;
     int smileXPos;
     int smileYPos;
+    boolean inputCheck;
 
-        
     private int xPos[];         //HERE i make all my arrays/constants
     private int xVel[];
     private int yPos[];
@@ -48,7 +48,7 @@ public class Grapher implements Runnable{
     private double dx;
     private double dy;
     private double distance;
-    private final long FRAME_TIME = 100000000; //this is in nanoseconds
+    private final long FRAME_TIME = 10000000; //this is in nanoseconds
 
     Scanner input = new Scanner(System.in);
     Preferences prefs = new Preferences();
@@ -69,14 +69,12 @@ public class Grapher implements Runnable{
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter days to run", "enter number of people to start as infected", 
                 "enter how long people are infected for, in cycles", "enter how long people are immune for after they are cured, in cycles", "enter how many times to repeat"};
         File file = new File ("output.txt");
-        System.out.println("enter false to use your own settings, anything else to use default");
-        boolean inputCheck = true;
+        System.out.println("enter true to use your own settings, anything else to use default");
         try{
             inputCheck = Boolean.parseBoolean(input.nextLine());
-            System.out.println(inputCheck);
         }catch(Exception e){
         }
-        if(inputCheck != false){
+        if(inputCheck == true){
             for(int z=0; z<8; z++){
                 System.out.println(prompts[z]);
                 Integer temp = null;
@@ -138,8 +136,6 @@ public class Grapher implements Runnable{
         long startTime = System.nanoTime();
         try {
             for(int i = 0; i < prefs.vars[0]; i++){
-                xPos[i] = xPos[i] + xVel[i];
-                yPos[i] = yPos[i] + yVel[i];
                 if(xPos[i] >= prefs.vars[1] - OVAL_DIAM){
                     xVel[i] = xVel[i] * -1;
                     xPos[i] = prefs.vars[1] - OVAL_DIAM;
@@ -171,6 +167,16 @@ public class Grapher implements Runnable{
                                 yVel[i] = yVel[j];
                                 xVel[j] = tempXVel;
                                 yVel[j] = tempYVel;
+                                if(xPos[i] < xPos[j]){
+                                    xPos[i] = xPos[i] - 1;
+                                }else{
+                                    xPos[j] = xPos[j] - 1;
+                                }
+                                if(yPos[i] < yPos[j]){
+                                    yPos[i] = yPos[i] - 1;
+                                }else{
+                                    yPos[j] = yPos[j] - 1;
+                                }
                                 infectedTime[i] = prefs.vars[5];
                                 infectedTime[j] = prefs.vars[5];
                             }else{
@@ -183,11 +189,18 @@ public class Grapher implements Runnable{
                                 yVel[i] = yVel[j];
                                 xVel[j] = tempXVel;
                                 yVel[j] = tempYVel;
+                                if(xPos[i] < xPos[j]){
+                                    xPos[i] = xPos[i] - 5;
+                                }else{
+                                    xPos[j] = xPos[j] - 5;
+                                }
                             }else{
                             }
                         }
                     }
                 }
+                xPos[i] = xPos[i] + xVel[i];
+                yPos[i] = yPos[i] + yVel[i];
             }
             for(int q=0; q<prefs.vars[0]; q++){
                 if(infectedTime[q] == 1){
@@ -203,7 +216,6 @@ public class Grapher implements Runnable{
                     infectedTime[q]++;
                 }
             }
-            System.out.println(infectedTime[0] + " " + infectedTime[1]);
             long endTime = System.nanoTime();
             long processTime = endTime - startTime;
             long timeToWait = FRAME_TIME - processTime;
@@ -252,8 +264,8 @@ public class Grapher implements Runnable{
             //g.setStroke(new BasicStroke(1));
             g.setColor(Color.black);
             g.fillOval(xPos[i]+(OVAL_DIAM/4), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
-            g.fillOval(xPos[i]+(OVAL_DIAM*(80/100)), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
-            g.drawArc(xPos[i]+(OVAL_DIAM/5), smileYPos, OVAL_DIAM*(64/100), OVAL_DIAM*(6/10), smileAngle, 180);
+            g.fillOval(xPos[i]+((OVAL_DIAM*3)/5), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
+            g.drawArc(xPos[i]+(OVAL_DIAM/5), smileYPos, ((OVAL_DIAM*6)/10), ((OVAL_DIAM*6)/10), smileAngle, 180);
         }
         bs.show();
         g.dispose();
