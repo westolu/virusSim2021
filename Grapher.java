@@ -1,4 +1,4 @@
-import java.io.*;
+import java.io.*; //import all imports
 import java.awt.*;
 import java.util.*;
 import java.lang.*;
@@ -14,7 +14,7 @@ import java.util.concurrent.*;
  * Write a description of class Grapher here.
  *
  * @author (Luke Weston)
- * @version (23.0)
+ * @version (24.0)
  */
 public class Grapher implements Runnable{
     private Display display;
@@ -30,28 +30,29 @@ public class Grapher implements Runnable{
 
     private final int MIN_VEL = -3;     //HERE i make all my arrays/constants
     private final int MAX_VEL = 3;
-    private final int OVAL_DIAM = 50;
-    private final int EYE_WIDTH = OVAL_DIAM/5;
+    private final int OVAL_DIAM = 40;   //diameter of the people
+    private final int EYE_WIDTH = OVAL_DIAM/5; //eye width/height is a factor of the oval diameter, so that no matter how wide the ovals are, the eyes stay in proportion
     private final int EYE_HEIGHT = (OVAL_DIAM*2)/5;
-    int smileAngle;
+    int smileAngle;                     //initialise angle/position for the mouth
     int smileXPos;
     int smileYPos;
     boolean inputCheck;
 
-    private int xPos[];         //HERE i make all my arrays/constants
-    private int xVel[];
+    private int xPos[];         
+    private int xVel[];         
     private int yPos[];
     private int yVel[];
-    private boolean infected[];
-    private long infectedTime[];
-    private boolean immune[]; // this variable is just for coloring the people if they are immune
+    private boolean infected[];         //boolean for if the person is infected or not
+    private long infectedTime[];        //how long the people are infected/immune people are, when they are infected (red), it is set to a +ve number that ticks down, and when the infected time 
+    //reaches 1 then they are immune (blue) and the infected time is set to a -ve number and ticks up until it reaches 0, where the person it set to be healthy (green)
+    private boolean immune[];           //this variable is just for coloring the people if they are immune
     private double dx;
     private double dy;
     private double distance;
     private final long FRAME_TIME = 10000000; //this is in nanoseconds
 
     Scanner input = new Scanner(System.in);
-    Preferences prefs = new Preferences();
+    Preferences prefs = new Preferences();//initialise default preferences
 
     boolean read = false;
     public Grapher(String title, int width, int height){
@@ -62,19 +63,19 @@ public class Grapher implements Runnable{
 
     private void initialize(){
         int peopleInfected = 0;
-        System.out.println("note: infected patients cannot be reinfected, and so cannot reset their timer");
-        System.out.println("note: enter -1 for default value, width/height cannot be less than 3.");
-        System.out.println("presets are: population size of 50, world width of 10, world height of 10, run for 10 days, 10 people to start infected,");
-        System.out.println("people are infected for 10 days before being cured, and are immune for 3 days after being cured, repeat simulation 20 times.");
+        System.out.println("note: enter -1 for default value, width/height must be more than 40.");
+        System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 10 days, 10 people to start infected,");
+        System.out.println("people are infected for 300 cycles before being cured, and are immune for 250 cycles after being cured, repeat simulation 20 times.");
+                                        //create an array of all the text I will output when I am asking about the users input.
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter days to run", "enter number of people to start as infected", 
                 "enter how long people are infected for, in cycles", "enter how long people are immune for after they are cured, in cycles", "enter how many times to repeat"};
         File file = new File ("output.txt");
         System.out.println("enter true to use your own settings, anything else to use default");
         try{
-            inputCheck = Boolean.parseBoolean(input.nextLine());
+            inputCheck = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the simulation uses default settings 
         }catch(Exception e){
         }
-        if(inputCheck == true){
+        if(inputCheck == true){         //if inputcheck is true, then ask the user for their settings they want to use
             for(int z=0; z<8; z++){
                 System.out.println(prompts[z]);
                 Integer temp = null;
@@ -82,13 +83,24 @@ public class Grapher implements Runnable{
                     try{
                         temp = Integer.parseInt(input.nextLine());
                     }catch(NumberFormatException e){
-                        System.out.println("invalid input, try again :D");
+                        System.out.println("invalid input, try again :D");          //if they do not type a number, then ask them to put in a different number.
                     }
                 } while (temp == null);
-                if(temp != -1){ //input checking
-                    prefs.vars[z] = temp;
+                if(temp > 0){ //input checking
+                    if(z == 1 || z == 2){                       // if the input is for the width (1 in my array of settings) or height (2 in my array of settings)
+                        if(temp > 60){                          
+                            prefs.vars[z] = temp;
+                        }else{
+                            System.out.println("sorry, width/height cannot be less than 60, please enter a value above 60.");
+                            z--;                              //move the array back one, asking again
+                        }
+                    }else {
+                        prefs.vars[z] = temp;
+                    }
+                }else{
+                    System.out.println("Please enter a number above 0, or -1 to use default");
+                    z--;
                 }
-
             }
         }
 
