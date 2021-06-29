@@ -14,7 +14,7 @@ import java.util.concurrent.*;
  * Write a description of class Grapher here.
  *
  * @author (Luke Weston)
- * @version (24.0)
+ * @version (25.0)
  */
 public class Grapher implements Runnable{
     private Display display;
@@ -37,7 +37,11 @@ public class Grapher implements Runnable{
     int smileXPos;
     int smileYPos;
     boolean inputCheck;
+    boolean printPrefs;
 
+    private int totalPeopleInfected = 0;
+    private int totalCycles = 0;
+    private int totalPeopleCured = 0;
     private int xPos[];         
     private int xVel[];         
     private int yPos[];
@@ -62,13 +66,18 @@ public class Grapher implements Runnable{
     }
 
     private void initialize(){
-        int peopleInfected = 0;
+        System.out.println("do you want to have each individual datapoint printed, for use in plotting with excel? input 'true' to have all datapoints printed.");
+        try{
+            printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each datapoint
+        }catch(Exception e){
+        }
         System.out.println("note: enter -1 for default value, width/height must be more than 40.");
         System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 10 days, 10 people to start infected,");
         System.out.println("people are infected for 300 cycles before being cured, and are immune for 250 cycles after being cured, repeat simulation 20 times.");
-                                        //create an array of all the text I will output when I am asking about the users input.
-        String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter days to run", "enter number of people to start as infected", 
-                "enter how long people are infected for, in cycles", "enter how long people are immune for after they are cured, in cycles", "enter how many times to repeat"};
+        //create an array of all the text I will output when I am asking about the users input.
+        String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter how many cycles to run", 
+                "enter number of people to start as infected", "enter how long people are infected for, in cycles", 
+                "enter how long people are immune for after they are cured, in cycles",};
         File file = new File ("output.txt");
         System.out.println("enter true to use your own settings, anything else to use default");
         try{
@@ -76,7 +85,7 @@ public class Grapher implements Runnable{
         }catch(Exception e){
         }
         if(inputCheck == true){         //if inputcheck is true, then ask the user for their settings they want to use
-            for(int z=0; z<8; z++){
+            for(int z=0; z<7; z++){
                 System.out.println(prompts[z]);
                 Integer temp = null;
                 do{
@@ -88,7 +97,7 @@ public class Grapher implements Runnable{
                 } while (temp == null);
                 if(temp > 0){ //input checking
                     if(z == 1 || z == 2){                       // if the input is for the width (1 in my array of settings) or height (2 in my array of settings)
-                        if(temp > 60){                          
+                        if(temp > 60){
                             prefs.vars[z] = temp;
                         }else{
                             System.out.println("sorry, width/height cannot be less than 60, please enter a value above 60.");
@@ -141,106 +150,119 @@ public class Grapher implements Runnable{
         for(int j = 0; j < prefs.vars[4]; j++){
             infected[j] = true;
             infectedTime[j] = prefs.vars[5];
+            totalPeopleInfected++;
         }
     }
 
     public void tickRun(){
-        long startTime = System.nanoTime();
-        try {
-            for(int i = 0; i < prefs.vars[0]; i++){
-                if(xPos[i] >= prefs.vars[1] - OVAL_DIAM){
-                    xVel[i] = xVel[i] * -1;
-                    xPos[i] = prefs.vars[1] - OVAL_DIAM;
-                }
-                if(yPos[i] >= prefs.vars[2] - OVAL_DIAM){
-                    yVel[i] = yVel[i] * -1;
-                    yPos[i] = prefs.vars[2] - OVAL_DIAM;
-                }
-                if(xPos[i] <= 0){
-                    xVel[i] = xVel[i] * -1;
-                    xPos[i] = 5;
-                }
-                if(yPos[i] <= 0){
-                    yVel[i] = yVel[i] * -1;
-                    yPos[i] = 5;
-                }
-                for(int j = 0; j<prefs.vars[0]; j++){ //hit detection
-                    if(i != j){
-                        dx = (xPos[i] + OVAL_DIAM/2) - (xPos[j] + OVAL_DIAM/2); //find difference in x
-                        dy = (yPos[i] + OVAL_DIAM/2) - (yPos[j] + OVAL_DIAM/2); //find difference in y
-                        distance = Math.sqrt(dx * dx + dy * dy) + 5; //find distance between using pythag
-                        if(immune[i] == false && immune[j] == false && infected[i] || infected[j]){
-                            if(distance < OVAL_DIAM){
-                                infected[i] = true;
-                                infected[j] = true;
-                                int tempXVel  = xVel[i];
-                                int tempYVel  = yVel[i];
-                                xVel[i] = xVel[j];
-                                yVel[i] = yVel[j];
-                                xVel[j] = tempXVel;
-                                yVel[j] = tempYVel;
-                                if(xPos[i] < xPos[j]){
-                                    xPos[i] = xPos[i] - 1;
-                                }else{
-                                    xPos[j] = xPos[j] - 1;
-                                }
-                                if(yPos[i] < yPos[j]){
-                                    yPos[i] = yPos[i] - 1;
-                                }else{
-                                    yPos[j] = yPos[j] - 1;
-                                }
-                                infectedTime[i] = prefs.vars[5];
-                                infectedTime[j] = prefs.vars[5];
-                            }else{
-                            }
-                        }else{
-                            if(distance < OVAL_DIAM){
-                                int tempXVel  = xVel[i];
-                                int tempYVel  = yVel[i];
-                                xVel[i] = xVel[j];
-                                yVel[i] = yVel[j];
-                                xVel[j] = tempXVel;
-                                yVel[j] = tempYVel;
-                                if(xPos[i] < xPos[j]){
-                                    xPos[i] = xPos[i] - 5;
-                                }else{
-                                    xPos[j] = xPos[j] - 5;
+        if(totalCycles < prefs.vars[3]){
+            long startTime = System.nanoTime();
+            try {
+                for(int i = 0; i < prefs.vars[0]; i++){
+                    if(xPos[i] >= prefs.vars[1] - OVAL_DIAM){
+                        xVel[i] = xVel[i] * -1;
+                        xPos[i] = prefs.vars[1] - OVAL_DIAM;
+                    }
+                    if(yPos[i] >= prefs.vars[2] - OVAL_DIAM){
+                        yVel[i] = yVel[i] * -1;
+                        yPos[i] = prefs.vars[2] - OVAL_DIAM;
+                    }
+                    if(xPos[i] <= 0){
+                        xVel[i] = xVel[i] * -1;
+                        xPos[i] = 5;
+                    }
+                    if(yPos[i] <= 0){
+                        yVel[i] = yVel[i] * -1;
+                        yPos[i] = 5;
+                    }
+                    for(int j = 0; j<prefs.vars[0]; j++){ //hit detection
+                        if(i != j){
+                            dx = (xPos[i] + OVAL_DIAM/2) - (xPos[j] + OVAL_DIAM/2); //find difference in x
+                            dy = (yPos[i] + OVAL_DIAM/2) - (yPos[j] + OVAL_DIAM/2); //find difference in y
+                            distance = Math.sqrt(dx * dx + dy * dy) + 5; //find distance between using pythag
+                            if(immune[i] == false && immune[j] == false){
+                                if(infected[i]){
+                                    if(distance < OVAL_DIAM){
+                                        infected[j] = true;
+                                        totalPeopleInfected++;
+                                        int tempXVel  = xVel[i];
+                                        int tempYVel  = yVel[i];
+                                        xVel[i] = xVel[j];
+                                        yVel[i] = yVel[j];
+                                        xVel[j] = tempXVel;
+                                        yVel[j] = tempYVel;
+                                        if(xPos[i] < xPos[j]){
+                                            xPos[i] = xPos[i] - 1;
+                                        }else{
+                                            xPos[j] = xPos[j] - 1;
+                                        }
+                                        if(yPos[i] < yPos[j]){
+                                            yPos[i] = yPos[i] - 1;
+                                        }else{
+                                            yPos[j] = yPos[j] - 1;
+                                        }
+                                        infectedTime[i] = prefs.vars[5];
+                                        infectedTime[j] = prefs.vars[5];
+                                    }else{
+                                    }
                                 }
                             }else{
+                                if(distance < OVAL_DIAM){
+                                    int tempXVel  = xVel[i];
+                                    int tempYVel  = yVel[i];
+                                    xVel[i] = xVel[j];
+                                    yVel[i] = yVel[j];
+                                    xVel[j] = tempXVel;
+                                    yVel[j] = tempYVel;
+                                    if(xPos[i] < xPos[j]){
+                                        xPos[i] = xPos[i] - 5;
+                                    }else{
+                                        xPos[j] = xPos[j] - 5;
+                                    }
+                                }else{
+                                }
                             }
                         }
                     }
+                    xPos[i] = xPos[i] + xVel[i];
+                    yPos[i] = yPos[i] + yVel[i];
                 }
-                xPos[i] = xPos[i] + xVel[i];
-                yPos[i] = yPos[i] + yVel[i];
-            }
-            for(int q=0; q<prefs.vars[0]; q++){
-                if(infectedTime[q] == 1){
-                    infected[q] = false;
-                    infectedTime[q] = -prefs.vars[6];
-                    immune[q] = true;
-                }else if(infectedTime[q] > 0){
-                    infectedTime[q]--;
-                }else if(infectedTime[q] == -1){
-                    infectedTime[q] = 0;
-                    immune[q] = false;
-                }else if(infectedTime[q] < -1){
-                    infectedTime[q]++;
+                for(int q=0; q<prefs.vars[0]; q++){
+                    if(infectedTime[q] == 1){
+                        infected[q] = false;
+                        infectedTime[q] = -prefs.vars[6];
+                        immune[q] = true;
+                        totalPeopleCured++;
+                    }else if(infectedTime[q] > 0){
+                        infectedTime[q]--;
+                    }else if(infectedTime[q] == -1){
+                        infectedTime[q] = 0;
+                        immune[q] = false;
+                    }else if(infectedTime[q] < -1){
+                        infectedTime[q]++;
+                    }
                 }
+                if(printPrefs){
+                    System.out.println(totalCycles + " " + totalPeopleInfected + " " + totalPeopleCured);
+                }
+                long endTime = System.nanoTime();
+                long processTime = endTime - startTime;
+                long timeToWait = FRAME_TIME - processTime;
+                if(timeToWait <= 0){
+                    System.out.println("uh oh something has gone wrong, the simulation is taking too long");
+                    timeToWait = 0;
+                }
+                timeToWait = timeToWait/1000000; //convert to milliseconds
+                Thread.sleep(timeToWait);
+                render();
+            } catch (Exception e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
             }
-            long endTime = System.nanoTime();
-            long processTime = endTime - startTime;
-            long timeToWait = FRAME_TIME - processTime;
-            if(timeToWait <= 0){
-                System.out.println("uh oh something has gone wrong, the simulation is taking too long");
-                timeToWait = 0;
-            }
-            timeToWait = timeToWait/1000000; //convert to milliseconds
-            Thread.sleep(timeToWait);
-            render();
-        } catch (Exception e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
+            totalCycles++;
+        }else{
+            System.out.println("simulation ended after " + totalCycles + " cycles, " + totalPeopleInfected + " people were infected and " + totalPeopleCured + " people were cured.");
+            stop();
         }
     }
 
