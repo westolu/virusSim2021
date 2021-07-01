@@ -21,7 +21,6 @@ public class Grapher implements Runnable{
     long TimeStep;
 
     private BufferStrategy bs;
-    private Graphics g;
 
     private final int MIN_VEL = -3;     //HERE i make all my arrays/constants
     private final int MAX_VEL = 3;
@@ -273,7 +272,7 @@ public class Grapher implements Runnable{
             display.getCanvas().createBufferStrategy(3);
             return;
         }
-        g = bs.getDrawGraphics();
+        Graphics g = bs.getDrawGraphics();
 
         //clear screen
         g.clearRect(0, 0, 2500, 2500);
