@@ -1,14 +1,20 @@
+import java.io.*; //import all imports
 import java.awt.*;
 import java.util.*;
 import java.lang.*;
+import java.io.File;
+import javax.swing.*;
+import java.applet.*;
+import java.awt.geom.*;
 import java.awt.image.*;
+import java.io.FileWriter;
 import java.util.concurrent.*;
 
 /**
  * Write a description of class Grapher here.
  *
  * @author (Luke Weston)
- * @version (26.0)
+ * @version (27.0)
  */
 public class Grapher implements Runnable{
     private Display display;
@@ -17,9 +23,18 @@ public class Grapher implements Runnable{
 
     private boolean running = false;
     private Thread thread;
+    long TimeStep;
 
+    private BufferStrategy bs;
+    private Graphics g;
+
+    private final int MIN_VEL = -3;     //HERE i make all my arrays/constants
+    private final int MAX_VEL = 3;
     private final int OVAL_DIAM = 40;   //diameter of the people
+    private final int EYE_WIDTH = OVAL_DIAM/5; //eye width/height is a factor of the oval diameter, so that no matter how wide the ovals are, the eyes stay in proportion
+    private final int EYE_HEIGHT = (OVAL_DIAM*2)/5;
     int smileAngle;                     //initialise angle/position for the mouth
+    int smileXPos;
     int smileYPos;
     int smileWidth;
     int smileHeight;
@@ -29,36 +44,34 @@ public class Grapher implements Runnable{
     private int totalPeopleInfected = 0;
     private int totalCycles = 0;
     private int totalPeopleCured = 0;
-    private int[] xPos;
-    private int[] xVel;
-    private int[] yPos;
-    private int[] yVel;
-    private boolean[] infected;         //boolean for if the person is infected or not
-    private long[] infectedTime;        //how long the people are infected/immune people are, when they are infected (red), it is set to a +ve number that ticks down, and when the infected time
+    private int xPos[];         
+    private int xVel[];         
+    private int yPos[];
+    private int yVel[];
+    private boolean infected[];         //boolean for if the person is infected or not
+    private long infectedTime[];        //how long the people are infected/immune people are, when they are infected (red), it is set to a +ve number that ticks down, and when the infected time 
     //reaches 1 then they are immune (blue) and the infected time is set to a -ve number and ticks up until it reaches 0, where the person it set to be healthy (green)
-    private boolean[] immune;           //this variable is just for coloring the people if they are immune
+    private boolean immune[];           //this variable is just for coloring the people if they are immune
     private double dx;
     private double dy;
     private double distance;
+    private final long FRAME_TIME = 10000000; //this is in nanoseconds
 
     Scanner input = new Scanner(System.in);
     Preferences prefs = new Preferences();//initialise default preferences
 
+    boolean read = false;
     public Grapher(String title, int width, int height){
         this.width = width;
         this.height = height;
         this.title = title;
     }
-    public static void main(String[] args) {
-        //ImportData data = new ImportData();
-        Grapher graph = new Grapher("virus sim", 900, 600);
-        graph.start();
-    }
+
     private void initialize(){
         System.out.println("do you want to have each individual datapoint printed, for use in plotting with excel? input 'true' to have all datapoints printed.");
         try{
             printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each datapoint
-        }catch(Exception ignored){
+        }catch(Exception e){
         }
         System.out.println("note: enter -1 for default value, width/height must be more than 300.");
         System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 3000 cycles, 1 person to start infected,");
@@ -67,12 +80,13 @@ public class Grapher implements Runnable{
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter how many cycles to run", 
                 "enter number of people to start as infected", "enter how long people are infected for, in cycles", 
                 "enter how long people are immune for after they are cured, in cycles",};
+        File file = new File ("output.txt");
         System.out.println("enter true to use your own settings, anything else to use default");
         try{
             inputCheck = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the simulation uses default settings 
-        }catch(Exception ignored){
+        }catch(Exception e){
         }
-        if(inputCheck){         //if inputcheck is true, then ask the user for their settings they want to use
+        if(inputCheck == true){         //if inputcheck is true, then ask the user for their settings they want to use
             for(int z=0; z<7; z++){
                 System.out.println(prompts[z]);
                 Integer temp = null;
@@ -101,7 +115,9 @@ public class Grapher implements Runnable{
             }
         }
 
-        display = new Display(prefs.vars[1], prefs.vars[2]);
+        // String[][] world = new String[prefs.vars[1]][prefs.vars[2]];
+        // FileWriter writer = new FileWriter(file);
+        display = new Display(title, prefs.vars[1], prefs.vars[2]);
         //ControlPanel control = new ControlPanel();
 
         xPos = new int[prefs.vars[0]]; //create all my arrays to be full of people
@@ -115,9 +131,6 @@ public class Grapher implements Runnable{
         for(int i = 0; i<prefs.vars[0]; i++){
             xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - OVAL_DIAM); //randomise positions and velocities between bounds
             yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - OVAL_DIAM);
-            //HERE i make all my arrays/constants
-            int MIN_VEL = -3;
-            int MAX_VEL = 3;
             xVel[i] = ThreadLocalRandom.current().nextInt(MIN_VEL, MAX_VEL);
             yVel[i] = ThreadLocalRandom.current().nextInt(MIN_VEL, MAX_VEL);
             infected[i] = false;
@@ -125,12 +138,13 @@ public class Grapher implements Runnable{
             immune[i] = false;
             for(int q = 0; q < prefs.vars[0]; q++){
                 for(int y = 0; y < prefs.vars[0]; y++){    
-                    dx = (xPos[q] + OVAL_DIAM/2.0) - (xPos[y] + OVAL_DIAM/2.0); //find difference in x
-                    dy = (yPos[q] + OVAL_DIAM/2.0) - (yPos[y] + OVAL_DIAM/2.0); //find difference in y
+                    dx = (xPos[q] + OVAL_DIAM/2) - (xPos[y] + OVAL_DIAM/2); //find difference in x
+                    dy = (yPos[q] + OVAL_DIAM/2) - (yPos[y] + OVAL_DIAM/2); //find difference in y
                     distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
                     if(distance <= OVAL_DIAM){      //if two people are overlapping
                         xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - OVAL_DIAM); //randomise positions and velocities between bounds
                         yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - OVAL_DIAM);
+                    }else{
                     }
                 }
             }
@@ -165,10 +179,10 @@ public class Grapher implements Runnable{
                     }
                     for(int j = 0; j<prefs.vars[0]; j++){ //hit detection
                         if(i != j){
-                            dx = (xPos[i] + OVAL_DIAM/2.0) - (xPos[j] + OVAL_DIAM/2.0); //find difference in x
-                            dy = (yPos[i] + OVAL_DIAM/2.0) - (yPos[j] + OVAL_DIAM/2.0); //find difference in y
+                            dx = (xPos[i] + OVAL_DIAM/2) - (xPos[j] + OVAL_DIAM/2); //find difference in x
+                            dy = (yPos[i] + OVAL_DIAM/2) - (yPos[j] + OVAL_DIAM/2); //find difference in y
                             distance = Math.sqrt(dx * dx + dy * dy) + 5; //find distance between using pythag
-                            if(!immune[i] && !immune[j]){
+                            if(immune[i] == false && immune[j] == false){
                                 if(infected[i]){
                                     if(distance < OVAL_DIAM){
                                         infected[j] = true;             //infect other person
@@ -191,6 +205,7 @@ public class Grapher implements Runnable{
                                         }
                                         infectedTime[i] = prefs.vars[5];
                                         infectedTime[j] = prefs.vars[5];
+                                    }else{
                                     }
                                 }
                             }else{
@@ -206,6 +221,7 @@ public class Grapher implements Runnable{
                                     }else{
                                         xPos[j] = xPos[j] - 5;
                                     }
+                                }else{
                                 }
                             }
                         }
@@ -233,8 +249,6 @@ public class Grapher implements Runnable{
                 }
                 long endTime = System.nanoTime();
                 long processTime = endTime - startTime;
-                //this is in nanoseconds
-                long FRAME_TIME = 10000000;
                 long timeToWait = FRAME_TIME - processTime;
                 if(timeToWait <= 0){
                     System.out.println("uh oh something has gone wrong, the simulation is taking too long");
@@ -255,12 +269,12 @@ public class Grapher implements Runnable{
     }
 
     private void render(){
-        BufferStrategy bs = display.getCanvas().getBufferStrategy();
+        bs = display.getCanvas().getBufferStrategy();
         if(bs == null){
             display.getCanvas().createBufferStrategy(3);
             return;
         }
-        Graphics g = bs.getDrawGraphics();
+        g = bs.getDrawGraphics();
 
         //clear screen
         g.clearRect(0, 0, 2500, 2500);
@@ -269,13 +283,13 @@ public class Grapher implements Runnable{
         for(int i = 0; i < prefs.vars[0]; i++){
             g.setColor(Color.black);
             g.fillOval(xPos[i], yPos[i], OVAL_DIAM, OVAL_DIAM);
-            if(infected[i]){
+            if(infected[i] == true){
                 g.setColor(Color.red);
                 smileAngle = 0;
                 smileYPos = yPos[i]+25;
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*4)/12;
-            }else if(immune[i]){
+            }else if(immune[i] == true){ 
                 g.setColor(Color.blue);
                 smileAngle = 180;
                 smileYPos = yPos[i]+10;
@@ -288,12 +302,9 @@ public class Grapher implements Runnable{
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*6)/10;
             }
-            g.fillOval(xPos[i] + (OVAL_DIAM / 20), yPos[i] + ((OVAL_DIAM /10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);
+            g.fillOval(xPos[i] + (OVAL_DIAM*1/20), yPos[i] + ((OVAL_DIAM*1/10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);
             //g.setStroke(new BasicStroke(1));
             g.setColor(Color.black);
-            //eye width/height is a factor of the oval diameter, so that no matter how wide the ovals are, the eyes stay in proportion
-            int EYE_WIDTH = OVAL_DIAM / 5;
-            int EYE_HEIGHT = (OVAL_DIAM * 2) / 5;
             g.fillOval(xPos[i]+(OVAL_DIAM/4), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
             g.fillOval(xPos[i]+((OVAL_DIAM*3)/5), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
             g.drawArc(xPos[i]+(OVAL_DIAM/5), smileYPos, smileWidth, smileHeight, smileAngle, 180);
