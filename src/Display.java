@@ -1,4 +1,4 @@
-package src;
+
 /**
  * Write a description of class displaycanvas here.
  *
@@ -35,13 +35,11 @@ public class Display extends JFrame {
     private void createDisplay(){
         setSize(400, 400);
         
-        frame = new JFrame(title);
-        frame.setSize(width, height);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(true);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        frame.toFront();
+        setTitle("virus simulation");
+        setSize(width, height);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(true);
+        setLocationRelativeTo(null);
         
         canvas = new Canvas();
         canvas.setPreferredSize(new Dimension(width, height));
@@ -49,8 +47,10 @@ public class Display extends JFrame {
         canvas.setMinimumSize(new Dimension(width, height));
         Panel1.add(button);
         this.getContentPane().add(Panel1);
-        frame.add(canvas);
-        frame.pack();
+        add(canvas);
+        pack();
+        this.toFront();
+        setVisible(true);
     }
     
     public Canvas getCanvas(){
