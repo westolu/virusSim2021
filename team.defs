@@ -1,0 +1,17 @@
+#Tue Jun 08 12:20:55 NZST 2021
+bluej.teamsettings.groupname=
+bluej.teamsettings.ignore1=.*\\.class
+bluej.teamsettings.yourName=Westolu
+bluej.teamsettings.git.server=github.com
+bluej.teamsettings.yourEmail=luke.weston@whs.school.nz
+bluej.teamsettings.git.repositoryPrefix=/westolu/virusSim2021.git
+bluej.teamsettings.vcs=git
+bluej.teamsettings.user=westolu
+bluej.teamsettings.ignore3=team\\.defs
+bluej.teamsettings.ignore2=bluej\\.pkh
+bluej.teamsettings.ignore5=.*\\~
+bluej.teamsettings.ignore4=.*\\.ctxt
+bluej.teamsettings.ignore7=.*\\\#backup
+bluej.teamsettings.ignore6=.*\\\#
+bluej.teamsettings.git.protocol=https
+bluej.teamsettings.ignore8=\\.DS_Store

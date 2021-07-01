@@ -1,13 +1,13 @@
-package src;
-
-import src.Display;
-import src.Preferences;
-
+import java.io.*; //import all imports
 import java.awt.*;
 import java.util.*;
 import java.lang.*;
 import java.io.File;
+import javax.swing.*;
+import java.applet.*;
+import java.awt.geom.*;
 import java.awt.image.*;
+import java.io.FileWriter;
 import java.util.concurrent.*;
 
 /**
@@ -36,6 +36,8 @@ public class Grapher implements Runnable{
     int smileAngle;                     //initialise angle/position for the mouth
     int smileXPos;
     int smileYPos;
+    int smileWidth;
+    int smileHeight;
     boolean inputCheck;
     boolean printPrefs;
 
@@ -64,20 +66,16 @@ public class Grapher implements Runnable{
         this.height = height;
         this.title = title;
     }
-    public static void main(String[] args) {
-        //ImportData data = new ImportData();
-        Grapher graph = new Grapher("virus sim", 900, 600);
-        graph.start();
-    }
+
     private void initialize(){
         System.out.println("do you want to have each individual datapoint printed, for use in plotting with excel? input 'true' to have all datapoints printed.");
         try{
             printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each datapoint
         }catch(Exception e){
         }
-        System.out.println("note: enter -1 for default value, width/height must be more than 40.");
-        System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 10 days, 10 people to start infected,");
-        System.out.println("people are infected for 300 cycles before being cured, and are immune for 250 cycles after being cured, repeat simulation 20 times.");
+        System.out.println("note: enter -1 for default value, width/height must be more than 300.");
+        System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 3000 cycles, 1 person to start infected,");
+        System.out.println("people are infected for 300 cycles before being cured, and are immune for 250 cycles after being cured");
         //create an array of all the text I will output when I am asking about the users input.
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter how many cycles to run", 
                 "enter number of people to start as infected", "enter how long people are infected for, in cycles", 
@@ -101,10 +99,10 @@ public class Grapher implements Runnable{
                 } while (temp == null);
                 if(temp > 0){ //input checking
                     if(z == 1 || z == 2){                       // if the input is for the width (1 in my array of settings) or height (2 in my array of settings)
-                        if(temp > 60){
+                        if(temp >= 300){
                             prefs.vars[z] = temp;
                         }else{
-                            System.out.println("sorry, width/height cannot be less than 60, please enter a value above 60.");
+                            System.out.println("sorry, width/height cannot be less than 300, please enter a value at or above 60.");
                             z--;                              //move the array back one, asking again
                         }
                     }else {
@@ -143,7 +141,7 @@ public class Grapher implements Runnable{
                     dx = (xPos[q] + OVAL_DIAM/2) - (xPos[y] + OVAL_DIAM/2); //find difference in x
                     dy = (yPos[q] + OVAL_DIAM/2) - (yPos[y] + OVAL_DIAM/2); //find difference in y
                     distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
-                    if(distance <= OVAL_DIAM){
+                    if(distance <= OVAL_DIAM){      //if two people are overlapping
                         xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - OVAL_DIAM); //randomise positions and velocities between bounds
                         yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - OVAL_DIAM);
                     }else{
@@ -163,20 +161,20 @@ public class Grapher implements Runnable{
             long startTime = System.nanoTime();
             try {
                 for(int i = 0; i < prefs.vars[0]; i++){
-                    if(xPos[i] >= prefs.vars[1] - OVAL_DIAM){
-                        xVel[i] = xVel[i] * -1;
+                    if(xPos[i] >= prefs.vars[1] - OVAL_DIAM){               //if person is at the edge of the screen
+                        xVel[i] = xVel[i] * -1;                             //reverse velocity
                         xPos[i] = prefs.vars[1] - OVAL_DIAM;
                     }
-                    if(yPos[i] >= prefs.vars[2] - OVAL_DIAM){
-                        yVel[i] = yVel[i] * -1;
+                    if(yPos[i] >= prefs.vars[2] - OVAL_DIAM){               //if person is at the edge of the screen
+                        yVel[i] = yVel[i] * -1;                             //reverse velocity
                         yPos[i] = prefs.vars[2] - OVAL_DIAM;
                     }
-                    if(xPos[i] <= 0){
-                        xVel[i] = xVel[i] * -1;
+                    if(xPos[i] <= 0){                                       //if person is at the edge of the screen
+                        xVel[i] = xVel[i] * -1;                             //reverse velocity
                         xPos[i] = 5;
                     }
-                    if(yPos[i] <= 0){
-                        yVel[i] = yVel[i] * -1;
+                    if(yPos[i] <= 0){                                       //if person is at the edge of the screen
+                        yVel[i] = yVel[i] * -1;                             //reverse velocity
                         yPos[i] = 5;
                     }
                     for(int j = 0; j<prefs.vars[0]; j++){ //hit detection
@@ -187,20 +185,20 @@ public class Grapher implements Runnable{
                             if(immune[i] == false && immune[j] == false){
                                 if(infected[i]){
                                     if(distance < OVAL_DIAM){
-                                        infected[j] = true;
+                                        infected[j] = true;             //infect other person
                                         totalPeopleInfected++;
-                                        int tempXVel  = xVel[i];
+                                        int tempXVel  = xVel[i];        //swap velocities
                                         int tempYVel  = yVel[i];
                                         xVel[i] = xVel[j];
                                         yVel[i] = yVel[j];
                                         xVel[j] = tempXVel;
                                         yVel[j] = tempYVel;
-                                        if(xPos[i] < xPos[j]){
-                                            xPos[i] = xPos[i] - 1;
+                                        if(xPos[i] < xPos[j]){          //move apart, x direction
+                                            xPos[i] = xPos[i] - 1;      
                                         }else{
                                             xPos[j] = xPos[j] - 1;
                                         }
-                                        if(yPos[i] < yPos[j]){
+                                        if(yPos[i] < yPos[j]){          //move apart, y direction
                                             yPos[i] = yPos[i] - 1;
                                         }else{
                                             yPos[j] = yPos[j] - 1;
@@ -288,22 +286,28 @@ public class Grapher implements Runnable{
             if(infected[i] == true){
                 g.setColor(Color.red);
                 smileAngle = 0;
-                smileYPos = yPos[i]+30;
+                smileYPos = yPos[i]+25;
+                smileWidth = ((OVAL_DIAM*6)/10);
+                smileHeight = (OVAL_DIAM*4)/12;
             }else if(immune[i] == true){ 
                 g.setColor(Color.blue);
                 smileAngle = 180;
                 smileYPos = yPos[i]+10;
+                smileWidth = ((OVAL_DIAM*6)/10);
+                smileHeight = (OVAL_DIAM*6)/10;
             }else{
                 g.setColor(Color.green);
                 smileAngle = 180;
                 smileYPos = yPos[i]+10;
+                smileWidth = ((OVAL_DIAM*6)/10);
+                smileHeight = (OVAL_DIAM*6)/10;
             }
             g.fillOval(xPos[i] + (OVAL_DIAM*1/20), yPos[i] + ((OVAL_DIAM*1/10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);
             //g.setStroke(new BasicStroke(1));
             g.setColor(Color.black);
             g.fillOval(xPos[i]+(OVAL_DIAM/4), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
             g.fillOval(xPos[i]+((OVAL_DIAM*3)/5), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
-            g.drawArc(xPos[i]+(OVAL_DIAM/5), smileYPos, ((OVAL_DIAM*6)/10), ((OVAL_DIAM*6)/10), smileAngle, 180);
+            g.drawArc(xPos[i]+(OVAL_DIAM/5), smileYPos, smileWidth, smileHeight, smileAngle, 180);
         }
         bs.show();
         g.dispose();
