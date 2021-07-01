@@ -1,4 +1,3 @@
-package src;//@author Luke Weston
 //* @version 6.0
 import java.util.concurrent.ThreadLocalRandom;
 public class Person

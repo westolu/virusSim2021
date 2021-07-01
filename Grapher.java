@@ -1,13 +1,8 @@
-import java.io.*; //import all imports
 import java.awt.*;
 import java.util.*;
 import java.lang.*;
 import java.io.File;
-import javax.swing.*;
-import java.applet.*;
-import java.awt.geom.*;
 import java.awt.image.*;
-import java.io.FileWriter;
 import java.util.concurrent.*;
 
 /**
@@ -66,7 +61,11 @@ public class Grapher implements Runnable{
         this.height = height;
         this.title = title;
     }
-
+    public static void main(String[] args) {
+        //ImportData data = new ImportData();
+        Grapher graph = new Grapher("virus sim", 900, 600);
+        graph.start();
+    }
     private void initialize(){
         System.out.println("do you want to have each individual datapoint printed, for use in plotting with excel? input 'true' to have all datapoints printed.");
         try{

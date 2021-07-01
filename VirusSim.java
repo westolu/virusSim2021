@@ -1,4 +1,3 @@
-package src;//@author Luke Weston
 //* @version 11.0
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.Scanner;
