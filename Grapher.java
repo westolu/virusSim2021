@@ -28,7 +28,8 @@ public class Grapher implements Runnable{
 
     private int totalPeopleInfected = 0;
     private int totalCycles = 0;
-    private int totalPeopleCured = 0;
+    private int currentPeopleInfected = 0;
+    private int currentPeopleCured = 0;         //TODO i need to make there be a second series and have that be the current people cured
     private int xPos[];         
     private int xVel[];         
     private int yPos[];
@@ -131,10 +132,11 @@ public class Grapher implements Runnable{
                 }
             }
         }
-        for(int j = 0; j < prefs.vars[4]; j++){
+        for(int j = 0; j < prefs.vars[4]; j++){         //initially infect all the people until there are as many people infected as the user wants.
             infected[j] = true;
             infectedTime[j] = prefs.vars[5];
             totalPeopleInfected++;
+            currentPeopleInfected++;
         }
         theChart = new Charter("Real-Time XChart", "# of cycles", "# of people", "people infected", 0, 0);
     }
@@ -169,7 +171,10 @@ public class Grapher implements Runnable{
                                 if(infected[i]){
                                     if(distance < OVAL_DIAM){
                                         infected[j] = true;             //infect other person
-                                        totalPeopleInfected++;
+                                        if() {
+                                            totalPeopleInfected++;
+                                            currentPeopleInfected++;
+                                        }
                                         int tempXVel  = xVel[i];        //swap velocities
                                         int tempYVel  = yVel[i];
                                         xVel[i] = xVel[j];
@@ -198,11 +203,7 @@ public class Grapher implements Runnable{
                                     yVel[i] = yVel[j];
                                     xVel[j] = tempXVel;
                                     yVel[j] = tempYVel;
-                                    if(xPos[i] < xPos[j]){
-                                        xPos[i] = xPos[i] - 5;
-                                    }else{
-                                        xPos[j] = xPos[j] - 5;
-                                    }
+
                                 }
                             }
                         }
@@ -210,34 +211,35 @@ public class Grapher implements Runnable{
                     xPos[i] = xPos[i] + xVel[i];        //move one tick of movement to prevent overlaps
                     yPos[i] = yPos[i] + yVel[i];
                 }
-                for(int q=0; q<prefs.vars[0]; q++){
-                    if(infectedTime[q] == 1){
-                        infected[q] = false;                    //this block of code ticks up/down the timers for infectiousness and immunity.
+                for(int q=0; q<prefs.vars[0]; q++){      //this block of code ticks up/down the timers for infectiousness and immunity.
+                    if(infectedTime[q] == 1){            //at the end of the infection duration, make the person immune and also set their infected timer to a -ve value, signalling for it to tick up.
+                        infected[q] = false;
                         infectedTime[q] = -prefs.vars[6];
                         immune[q] = true;
-                        totalPeopleCured++;
-                    }else if(infectedTime[q] > 0){
+                        currentPeopleCured++;
+                        currentPeopleInfected--;
+                    }else if(infectedTime[q] > 0){      //if the infected timer is above 0, ie the person is infected, tick the timer down.
                         infectedTime[q]--;
-                    }else if(infectedTime[q] == -1){
+                    }else if(infectedTime[q] == -1){    //at the end of the immunity duration, make the person not immune anymore, and set their infected timer to a value of 0, signalling that the person is healthy.
                         infectedTime[q] = 0;
                         immune[q] = false;
-                    }else if(infectedTime[q] < -1){
+                    }else if(infectedTime[q] < -1){     //if the infected timer is below -1, ie the person is immune, tick the timer up.
                         infectedTime[q]++;
                     }
                 }
-                if(printPrefs){
-                    System.out.println(totalCycles + " " + totalPeopleInfected + " " + totalPeopleCured);
+                if(printPrefs){     //if they want each data point printed, do so.
+                    System.out.println(totalCycles + " " + currentPeopleInfected + " " + currentPeopleInfected);
                 }
-                theChart.addNewData(totalCycles, totalPeopleInfected);
+                theChart.addNewData(totalCycles, currentPeopleInfected);
                 long endTime = System.nanoTime();
                 long processTime = endTime - startTime;
                 long timeToWait = FRAME_TIME - processTime;
-                if(timeToWait <= 0){
+                if(timeToWait <= 0){            //if the time to wait is less than or equal to 0 then the simulation is taking longer than allowed to run, so the program will stop.
                     System.out.println("uh oh something has gone wrong, the simulation is taking too long");
                     timeToWait = 0;
                 }
                 timeToWait = timeToWait/1000000; //convert to milliseconds
-                Thread.sleep(timeToWait);
+                Thread.sleep(timeToWait);       //sleep for the time to wait, so that frame rate is constant
                 render();
             } catch (Exception e) {
                 System.out.println("An error occurred.");
@@ -245,7 +247,7 @@ public class Grapher implements Runnable{
             }
             totalCycles++;
         }else{
-            System.out.println("simulation ended after " + totalCycles + " cycles, " + totalPeopleInfected + " people were infected and " + totalPeopleCured + " people were cured.");
+            System.out.println("simulation ended after " + totalCycles + " cycles, " + totalPeopleInfected + " people were infected");
             stop();
         }
     }
@@ -265,7 +267,7 @@ public class Grapher implements Runnable{
         g = bs.getDrawGraphics();
 
         //clear screen
-        g.clearRect(0, 0, 2500, 2500);
+        g.clearRect(0, 0, 2500, 2500);              //clear all drawing on the screen
 
         //draw people
         for(int i = 0; i < prefs.vars[0]; i++){
@@ -273,29 +275,29 @@ public class Grapher implements Runnable{
             g.fillOval(xPos[i], yPos[i], OVAL_DIAM, OVAL_DIAM);
             if(infected[i]){
                 g.setColor(Color.red);
-                smileAngle = 0;
+                smileAngle = 0;                 //set smile angle/pos so that it is a sad face
                 smileYPos = yPos[i]+25;
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*4)/12;
             }else if(immune[i]){
                 g.setColor(Color.blue);
-                smileAngle = 180;
+                smileAngle = 180;               //set smile angle/pos so that it is a happy face
                 smileYPos = yPos[i]+10;
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*6)/10;
             }else{
                 g.setColor(Color.green);
-                smileAngle = 180;
+                smileAngle = 180;               //set smile angle/pos so that it is a happy face
                 smileYPos = yPos[i]+10;
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*6)/10;
             }
-            g.fillOval(xPos[i] + (OVAL_DIAM/20), yPos[i] + ((OVAL_DIAM/10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);
+            g.fillOval(xPos[i] + (OVAL_DIAM/20), yPos[i] + ((OVAL_DIAM/10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);         //draw the oval
             //g.setStroke(new BasicStroke(1));
             g.setColor(Color.black);
-            g.fillOval(xPos[i]+(OVAL_DIAM/4), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
+            g.fillOval(xPos[i]+(OVAL_DIAM/4), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);                      //draw the eyes
             g.fillOval(xPos[i]+((OVAL_DIAM*3)/5), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
-            g.drawArc(xPos[i]+(OVAL_DIAM/5), smileYPos, smileWidth, smileHeight, smileAngle, 180);
+            g.drawArc(xPos[i]+(OVAL_DIAM/5), smileYPos, smileWidth, smileHeight, smileAngle, 180);          //draw the smile
         }
         bs.show();
         g.dispose();
@@ -303,7 +305,7 @@ public class Grapher implements Runnable{
 
     public void run(){
         try{
-            render();
+            render();                                   //when the program starts, render to get the window up on the screen, wait one second and then run.
             Thread.sleep(1000);
         }catch (Exception e) {
             System.out.println("An error occurred.");
@@ -313,12 +315,12 @@ public class Grapher implements Runnable{
             tickRun();
         }
 
-        stop(); //i want you to comment them with what they do because you dont know!!! (pleading)
+        stop();
     }
 
     private synchronized void start(){
-        try {//accounting for errors OMG
-            initialize();
+        try {
+            initialize();                                   //when you start the program, initialise
         } catch (Exception e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
@@ -330,7 +332,7 @@ public class Grapher implements Runnable{
         thread.start();
     }
 
-    private synchronized void stop(){
+    private synchronized void stop(){                       //stops the program
         if(!running)
             return;
         running = false;
