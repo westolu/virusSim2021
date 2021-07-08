@@ -1,13 +1,7 @@
-import java.io.*; //import all imports
 import java.awt.*;
 import java.util.*;
 import java.lang.*;
-import java.io.File;
-import javax.swing.*;
-import java.applet.*;
-import java.awt.geom.*;
 import java.awt.image.*;
-import java.io.FileWriter;
 import java.util.concurrent.*;
 
 /**
@@ -22,9 +16,6 @@ public class Grapher implements Runnable{
     private boolean running = false;
     private Thread thread;
 
-    private BufferStrategy bs;
-    private Graphics g;
-
     private static final int MIN_VEL = -3;     //HERE i make all my arrays/constants
     private static final int MAX_VEL = 3;
     private static final int OVAL_DIAM = 40;   //diameter of the people
@@ -32,7 +23,6 @@ public class Grapher implements Runnable{
     private static final int EYE_HEIGHT = (OVAL_DIAM*2)/5;
 
 
-    private boolean inputCheck;
     private boolean printPrefs;
 
     private int totalPeopleInfected = 0;
@@ -62,6 +52,7 @@ public class Grapher implements Runnable{
         grapher.start();
     }
     private void initialize(){
+        boolean inputCheck;
         System.out.println("do you want to have each individual data point printed, for use in plotting with excel? input 'true' to have all data points printed.");
         printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each data point
         System.out.println("note: enter -1 for default value, width/height must be more than 300.");
@@ -71,7 +62,6 @@ public class Grapher implements Runnable{
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter how many cycles to run", 
                 "enter number of people to start as infected", "enter how long people are infected for, in cycles", 
                 "enter how long people are immune for after they are cured, in cycles",};
-        File file = new File ("output.txt");
         System.out.println("enter true to use your own settings, anything else to use default");
 
 
@@ -135,7 +125,6 @@ public class Grapher implements Runnable{
                     if(distance <= OVAL_DIAM){      //if two people are overlapping
                         xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - OVAL_DIAM); //randomise positions and velocities between bounds
                         yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - OVAL_DIAM);
-                    }else{
                     }
                 }
             }
@@ -262,6 +251,8 @@ public class Grapher implements Runnable{
         int smileYPos;
         int smileWidth;
         int smileHeight;
+        BufferStrategy bs;
+        Graphics g;
         bs = display.getCanvas().getBufferStrategy();
         if(bs == null){
             display.getCanvas().createBufferStrategy(3);
