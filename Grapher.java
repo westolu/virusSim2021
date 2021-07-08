@@ -15,6 +15,7 @@ public class Grapher implements Runnable{
 
     private boolean running = false;
     private Thread thread;
+    private Charter theChart;
 
     private static final int MIN_VEL = -3;     //HERE i make all my arrays/constants
     private static final int MAX_VEL = 3;
@@ -43,6 +44,7 @@ public class Grapher implements Runnable{
 
     private Scanner input = new Scanner(System.in);
     private Preferences prefs = new Preferences();//initialise default preferences
+
 
     private Grapher(){
 
@@ -134,6 +136,7 @@ public class Grapher implements Runnable{
             infectedTime[j] = prefs.vars[5];
             totalPeopleInfected++;
         }
+        theChart = new Charter("Real-Time XChart", "# of cycles", "# of people", "people infected", 0, 0);
     }
 
     private void tickRun(){
@@ -174,7 +177,7 @@ public class Grapher implements Runnable{
                                         xVel[j] = tempXVel;
                                         yVel[j] = tempYVel;
                                         if(xPos[i] < xPos[j]){          //move apart, x direction
-                                            xPos[i] = xPos[i] - 1;      
+                                            xPos[i] = xPos[i] - 1;
                                         }else{
                                             xPos[j] = xPos[j] - 1;
                                         }
@@ -190,7 +193,7 @@ public class Grapher implements Runnable{
                             }else{
                                 if(distance < OVAL_DIAM){
                                     int tempXVel  = xVel[i];
-                                    int tempYVel  = yVel[i];
+                                    int tempYVel  = yVel[i];        //same collision detection, but between immune people and infected people
                                     xVel[i] = xVel[j];
                                     yVel[i] = yVel[j];
                                     xVel[j] = tempXVel;
@@ -204,12 +207,12 @@ public class Grapher implements Runnable{
                             }
                         }
                     }
-                    xPos[i] = xPos[i] + xVel[i];
+                    xPos[i] = xPos[i] + xVel[i];        //move one tick of movement to prevent overlaps
                     yPos[i] = yPos[i] + yVel[i];
                 }
                 for(int q=0; q<prefs.vars[0]; q++){
                     if(infectedTime[q] == 1){
-                        infected[q] = false;
+                        infected[q] = false;                    //this block of code ticks up/down the timers for infectiousness and immunity.
                         infectedTime[q] = -prefs.vars[6];
                         immune[q] = true;
                         totalPeopleCured++;
@@ -225,6 +228,7 @@ public class Grapher implements Runnable{
                 if(printPrefs){
                     System.out.println(totalCycles + " " + totalPeopleInfected + " " + totalPeopleCured);
                 }
+                theChart.addNewData(totalCycles, totalPeopleInfected);
                 long endTime = System.nanoTime();
                 long processTime = endTime - startTime;
                 long timeToWait = FRAME_TIME - processTime;
@@ -307,15 +311,13 @@ public class Grapher implements Runnable{
         }
         while(running){
             tickRun();
-
-            //render();
         }
 
-        stop();
+        stop(); //i want you to comment them with what they do because you dont know!!! (pleading)
     }
 
     private synchronized void start(){
-        try {
+        try {//accounting for errors OMG
             initialize();
         } catch (Exception e) {
             System.out.println("An error occurred.");
