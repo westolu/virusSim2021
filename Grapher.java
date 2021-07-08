@@ -117,7 +117,7 @@ public class Grapher implements Runnable{
 
         // String[][] world = new String[prefs.vars[1]][prefs.vars[2]];
         // FileWriter writer = new FileWriter(file);
-        display = new Display(title, prefs.vars[1], prefs.vars[2]);
+        display = new Display(prefs.vars[1], prefs.vars[2]);
         //ControlPanel control = new ControlPanel();
 
         xPos = new int[prefs.vars[0]]; //create all my arrays to be full of people
