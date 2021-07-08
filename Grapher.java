@@ -18,28 +18,22 @@ import java.util.concurrent.*;
  */
 public class Grapher implements Runnable{
     private Display display;
-    public int width, height;
-    public String title;
 
     private boolean running = false;
     private Thread thread;
-    long TimeStep;
 
     private BufferStrategy bs;
     private Graphics g;
 
-    private final int MIN_VEL = -3;     //HERE i make all my arrays/constants
-    private final int MAX_VEL = 3;
-    private final int OVAL_DIAM = 40;   //diameter of the people
-    private final int EYE_WIDTH = OVAL_DIAM/5; //eye width/height is a factor of the oval diameter, so that no matter how wide the ovals are, the eyes stay in proportion
-    private final int EYE_HEIGHT = (OVAL_DIAM*2)/5;
-    int smileAngle;                     //initialise angle/position for the mouth
-    int smileXPos;
-    int smileYPos;
-    int smileWidth;
-    int smileHeight;
-    boolean inputCheck;
-    boolean printPrefs;
+    private static final int MIN_VEL = -3;     //HERE i make all my arrays/constants
+    private static final int MAX_VEL = 3;
+    private static final int OVAL_DIAM = 40;   //diameter of the people
+    private static final int EYE_WIDTH = OVAL_DIAM/5; //eye width/height is a factor of the oval diameter, so that no matter how wide the ovals are, the eyes stay in proportion
+    private static final int EYE_HEIGHT = (OVAL_DIAM*2)/5;
+
+
+    private boolean inputCheck;
+    private boolean printPrefs;
 
     private int totalPeopleInfected = 0;
     private int totalCycles = 0;
@@ -55,24 +49,21 @@ public class Grapher implements Runnable{
     private double dx;
     private double dy;
     private double distance;
-    private final long FRAME_TIME = 10000000; //this is in nanoseconds
+    private static final long FRAME_TIME = 10000000; //this is in nanoseconds
 
-    Scanner input = new Scanner(System.in);
-    Preferences prefs = new Preferences();//initialise default preferences
+    private Scanner input = new Scanner(System.in);
+    private Preferences prefs = new Preferences();//initialise default preferences
 
-    boolean read = false;
-    public Grapher(String title, int width, int height){
-        this.width = width;
-        this.height = height;
-        this.title = title;
+    private Grapher(){
+
     }
-
+    public static void main(String[] args) {
+        Grapher grapher = new Grapher();
+        grapher.start();
+    }
     private void initialize(){
-        System.out.println("do you want to have each individual datapoint printed, for use in plotting with excel? input 'true' to have all datapoints printed.");
-        try{
-            printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each datapoint
-        }catch(Exception e){
-        }
+        System.out.println("do you want to have each individual data point printed, for use in plotting with excel? input 'true' to have all data points printed.");
+        printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each data point
         System.out.println("note: enter -1 for default value, width/height must be more than 300.");
         System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 3000 cycles, 1 person to start infected,");
         System.out.println("people are infected for 300 cycles before being cured, and are immune for 250 cycles after being cured");
@@ -82,11 +73,11 @@ public class Grapher implements Runnable{
                 "enter how long people are immune for after they are cured, in cycles",};
         File file = new File ("output.txt");
         System.out.println("enter true to use your own settings, anything else to use default");
-        try{
-            inputCheck = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the simulation uses default settings 
-        }catch(Exception e){
-        }
-        if(inputCheck == true){         //if inputcheck is true, then ask the user for their settings they want to use
+
+
+        inputCheck = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the simulation uses default settings
+
+        if(inputCheck){         //if inputcheck is true, then ask the user for their settings they want to use
             for(int z=0; z<7; z++){
                 System.out.println(prompts[z]);
                 Integer temp = null;
@@ -138,8 +129,8 @@ public class Grapher implements Runnable{
             immune[i] = false;
             for(int q = 0; q < prefs.vars[0]; q++){
                 for(int y = 0; y < prefs.vars[0]; y++){    
-                    dx = (xPos[q] + OVAL_DIAM/2) - (xPos[y] + OVAL_DIAM/2); //find difference in x
-                    dy = (yPos[q] + OVAL_DIAM/2) - (yPos[y] + OVAL_DIAM/2); //find difference in y
+                    dx = (xPos[q] + OVAL_DIAM*0.5) - (xPos[y] + OVAL_DIAM*0.5); //find difference in x
+                    dy = (yPos[q] + OVAL_DIAM*0.5) - (yPos[y] + OVAL_DIAM*0.5); //find difference in y
                     distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
                     if(distance <= OVAL_DIAM){      //if two people are overlapping
                         xPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[1] - OVAL_DIAM); //randomise positions and velocities between bounds
@@ -156,7 +147,7 @@ public class Grapher implements Runnable{
         }
     }
 
-    public void tickRun(){
+    private void tickRun(){
         if(totalCycles < prefs.vars[3]){
             long startTime = System.nanoTime();
             try {
@@ -179,10 +170,10 @@ public class Grapher implements Runnable{
                     }
                     for(int j = 0; j<prefs.vars[0]; j++){ //hit detection
                         if(i != j){
-                            dx = (xPos[i] + OVAL_DIAM/2) - (xPos[j] + OVAL_DIAM/2); //find difference in x
-                            dy = (yPos[i] + OVAL_DIAM/2) - (yPos[j] + OVAL_DIAM/2); //find difference in y
+                            dx = (xPos[i] + OVAL_DIAM*0.5) - (xPos[j] + OVAL_DIAM*0.5); //find difference in x
+                            dy = (yPos[i] + OVAL_DIAM*0.5) - (yPos[j] + OVAL_DIAM*0.5); //find difference in y
                             distance = Math.sqrt(dx * dx + dy * dy) + 5; //find distance between using pythag
-                            if(immune[i] == false && immune[j] == false){
+                            if(!immune[i] && !immune[j]){
                                 if(infected[i]){
                                     if(distance < OVAL_DIAM){
                                         infected[j] = true;             //infect other person
@@ -205,7 +196,6 @@ public class Grapher implements Runnable{
                                         }
                                         infectedTime[i] = prefs.vars[5];
                                         infectedTime[j] = prefs.vars[5];
-                                    }else{
                                     }
                                 }
                             }else{
@@ -221,7 +211,6 @@ public class Grapher implements Runnable{
                                     }else{
                                         xPos[j] = xPos[j] - 5;
                                     }
-                                }else{
                                 }
                             }
                         }
@@ -269,6 +258,10 @@ public class Grapher implements Runnable{
     }
 
     private void render(){
+        int smileAngle;
+        int smileYPos;
+        int smileWidth;
+        int smileHeight;
         bs = display.getCanvas().getBufferStrategy();
         if(bs == null){
             display.getCanvas().createBufferStrategy(3);
@@ -283,13 +276,13 @@ public class Grapher implements Runnable{
         for(int i = 0; i < prefs.vars[0]; i++){
             g.setColor(Color.black);
             g.fillOval(xPos[i], yPos[i], OVAL_DIAM, OVAL_DIAM);
-            if(infected[i] == true){
+            if(infected[i]){
                 g.setColor(Color.red);
                 smileAngle = 0;
                 smileYPos = yPos[i]+25;
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*4)/12;
-            }else if(immune[i] == true){ 
+            }else if(immune[i]){
                 g.setColor(Color.blue);
                 smileAngle = 180;
                 smileYPos = yPos[i]+10;
@@ -302,7 +295,7 @@ public class Grapher implements Runnable{
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*6)/10;
             }
-            g.fillOval(xPos[i] + (OVAL_DIAM*1/20), yPos[i] + ((OVAL_DIAM*1/10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);
+            g.fillOval(xPos[i] + (OVAL_DIAM/20), yPos[i] + ((OVAL_DIAM/10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);
             //g.setStroke(new BasicStroke(1));
             g.setColor(Color.black);
             g.fillOval(xPos[i]+(OVAL_DIAM/4), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
@@ -330,7 +323,7 @@ public class Grapher implements Runnable{
         stop();
     }
 
-    public synchronized void start(){
+    private synchronized void start(){
         try {
             initialize();
         } catch (Exception e) {
@@ -344,7 +337,7 @@ public class Grapher implements Runnable{
         thread.start();
     }
 
-    public synchronized void stop(){
+    private synchronized void stop(){
         if(!running)
             return;
         running = false;
