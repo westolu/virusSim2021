@@ -29,7 +29,7 @@ public class Grapher implements Runnable{
     private int totalPeopleInfected = 0;
     private int totalCycles = 0;
     private int currentPeopleInfected = 0;
-    private int currentPeopleCured = 0;         //TODO i need to make there be a second series and have that be the current people cured
+    private int currentPeopleImmune = 0;         //TODO i need to make there be a second series and have that be the current people Immune
     private int xPos[];         
     private int xVel[];         
     private int yPos[];
@@ -61,17 +61,18 @@ public class Grapher implements Runnable{
         System.out.println("note: enter -1 for default value, width/height must be more than 300.");
         System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 3000 cycles, 1 person to start infected,");
         System.out.println("people are infected for 300 cycles before being cured, and are immune for 250 cycles after being cured");
+        System.out.println("default infection chance is 100%");
         //create an array of all the text I will output when I am asking about the users input.
         String[] prompts = new String[] {"enter population", "enter width of world", "enter height of world", "enter how many cycles to run", 
                 "enter number of people to start as infected", "enter how long people are infected for, in cycles", 
-                "enter how long people are immune for after they are cured, in cycles",};
+                "enter how long people are immune for after they are cured, in cycles", "enter the infection chance, a number between 0 and 100"};
         System.out.println("enter true to use your own settings, anything else to use default");
 
 
         inputCheck = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the simulation uses default settings
 
         if(inputCheck){         //if inputcheck is true, then ask the user for their settings they want to use
-            for(int z=0; z<7; z++){
+            for(int z=0; z<8; z++){
                 System.out.println(prompts[z]);
                 Integer temp = null;
                 do{
@@ -91,6 +92,12 @@ public class Grapher implements Runnable{
                         }
                     }else {
                         prefs.vars[z] = temp;
+                    }
+                    if(z==8){
+                        if(temp<=100 && temp>=0){
+                            System.out.println("sorry, infection chance must be more than  or equal to 0 and must be less than or equal to 100, please enter a value accordingly.");
+                            z--;                              //move the array back one, asking again
+                        }
                     }
                 }else{
                     System.out.println("Please enter a number above 0, or -1 to use default");
@@ -132,7 +139,7 @@ public class Grapher implements Runnable{
                 }
             }
         }
-        for(int j = 0; j < prefs.vars[4]; j++){         //initially infect all the people until there are as many people infected as the user wants.
+        for(int j = 0; j < prefs.vars[4]; j++){         //initially infect people until there are as many people infected as the user wants.
             infected[j] = true;
             infectedTime[j] = prefs.vars[5];
             totalPeopleInfected++;
@@ -170,10 +177,12 @@ public class Grapher implements Runnable{
                             if(!immune[i] && !immune[j]){
                                 if(infected[i]){
                                     if(distance < OVAL_DIAM){
-                                        infected[j] = true;             //infect other person
-                                        if() {
-                                            totalPeopleInfected++;
-                                            currentPeopleInfected++;
+                                        if(ThreadLocalRandom.current().nextInt(0, 100) > prefs.vars[7]) { //% chance for the person to get infected, this is given by the user, 100% by default.
+                                            if (!infected[j]) {
+                                                totalPeopleInfected++;
+                                                currentPeopleInfected++;
+                                                infected[j] = true;             //infect other person
+                                            }
                                         }
                                         int tempXVel  = xVel[i];        //swap velocities
                                         int tempYVel  = yVel[i];
@@ -216,7 +225,7 @@ public class Grapher implements Runnable{
                         infected[q] = false;
                         infectedTime[q] = -prefs.vars[6];
                         immune[q] = true;
-                        currentPeopleCured++;
+                        currentPeopleImmune++;
                         currentPeopleInfected--;
                     }else if(infectedTime[q] > 0){      //if the infected timer is above 0, ie the person is infected, tick the timer down.
                         infectedTime[q]--;
@@ -228,9 +237,9 @@ public class Grapher implements Runnable{
                     }
                 }
                 if(printPrefs){     //if they want each data point printed, do so.
-                    System.out.println(totalCycles + " " + currentPeopleInfected + " " + currentPeopleInfected);
+                    System.out.println(totalCycles + " " + currentPeopleInfected + " " + currentPeopleImmune);
                 }
-                theChart.addNewData(totalCycles, currentPeopleInfected);
+                theChart.addNewData(totalCycles, currentPeopleInfected);//update the chart to have the new datapoint
                 long endTime = System.nanoTime();
                 long processTime = endTime - startTime;
                 long timeToWait = FRAME_TIME - processTime;
