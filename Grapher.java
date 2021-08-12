@@ -29,7 +29,7 @@ public class Grapher implements Runnable{
     private int totalPeopleInfected = 0;
     private int totalCycles = 0;
     private int currentPeopleInfected = 0;
-    private int currentPeopleImmune = 0;         //TODO i need to make there be a second series and have that be the current people Immune
+    private int currentPeopleImmune = 0;
     private int xPos[];         
     private int xVel[];         
     private int yPos[];
@@ -177,7 +177,7 @@ public class Grapher implements Runnable{
                             if(!immune[i] && !immune[j]){
                                 if(infected[i]){
                                     if(distance < OVAL_DIAM){
-                                        if(ThreadLocalRandom.current().nextInt(0, 100) > prefs.vars[7]) { //% chance for the person to get infected, this is given by the user, 100% by default.
+                                        if(ThreadLocalRandom.current().nextInt(0, 100) < prefs.vars[7]) { //% chance for the person to get infected, this is given by the user, 100% by default.
                                             if (!infected[j]) {
                                                 totalPeopleInfected++;
                                                 currentPeopleInfected++;
@@ -237,7 +237,7 @@ public class Grapher implements Runnable{
                     }
                 }
                 if(printPrefs){     //if they want each data point printed, do so.
-                    System.out.println(totalCycles + " " + currentPeopleInfected + " " + currentPeopleImmune);
+                    System.out.println(totalCycles + " cycles " + currentPeopleInfected + " people infected currently " + currentPeopleImmune + " people immune currently " + (prefs.vars[0] - currentPeopleInfected) + " people healthy currently");
                 }
                 theChart.addNewData(totalCycles, currentPeopleInfected);//update the chart to have the new datapoint
                 long endTime = System.nanoTime();
