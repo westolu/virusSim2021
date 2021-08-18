@@ -342,7 +342,7 @@ public class Grapher implements Runnable{
     }
 
     private synchronized void stop(){                       //stops the program
-        if(!running)
+        if(!running)                                        //if the program 
             return;
         running = false;
         try{
