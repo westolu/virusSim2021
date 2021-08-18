@@ -251,7 +251,7 @@ public class Grapher implements Runnable{
                 Thread.sleep(timeToWait);       //sleep for the time to wait, so that frame rate is constant
                 render();
             } catch (Exception e) {
-                System.out.println("An error occurred.");
+                System.out.println("An error occurred, inside the tick function");
                 e.printStackTrace();
             }
             totalCycles++;
@@ -316,8 +316,8 @@ public class Grapher implements Runnable{
         try{
             render();                                   //when the program starts, render to get the window up on the screen, wait one second and then run.
             Thread.sleep(1000);
-        }catch (Exception e) {
-            System.out.println("An error occurred.");
+        }catch (Exception e) {                          //if there is a error in the first render, then tell the user
+            System.out.println("An error occurred, when trying the first render");
             e.printStackTrace();
         }
         while(running){
@@ -330,19 +330,19 @@ public class Grapher implements Runnable{
     private synchronized void start(){
         try {
             initialize();                                   //when you start the program, initialise
-        } catch (Exception e) {
-            System.out.println("An error occurred.");
+        } catch (Exception e) {                             //if there is a error in the initialisation, then tell the user
+            System.out.println("An error occurred in the initialisation of the program.");
             e.printStackTrace();
         }
         if(running)
             return;
         running = true;
         thread = new Thread(this);
-        thread.start();
+        thread.start();                                     //start the thread
     }
 
     private synchronized void stop(){                       //stops the program
-        if(!running)                                        //if the program 
+        if(!running)                                        //if the program is not running, set "running" to false, and try to join the thread.
             return;
         running = false;
         try{
