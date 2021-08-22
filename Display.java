@@ -24,19 +24,19 @@ public class Display extends JFrame {
         
         setTitle("virus simulation");
         setSize(width, height); //resize to users input
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //make the close operation to, when the user closes the window, to exit.
         setResizable(true);
         setLocationRelativeTo(null);
         
         canvas = new Canvas();
-        canvas.setPreferredSize(new Dimension(width, height));  //set canvases max, min, and prefered size
+        canvas.setPreferredSize(new Dimension(width, height));  //set canvases max, min, and prefered size.
         canvas.setMaximumSize(new Dimension(width, height));
         canvas.setMinimumSize(new Dimension(width, height));
         panel.add(button);
         this.getContentPane().add(panel);
         add(canvas);
         pack();
-        this.toFront();
+        this.toFront(); //send the frame to the front of the windows, so the user doesnt have to alt-tab.
         setVisible(true);
     }
     
