@@ -30,8 +30,8 @@ public class Grapher implements Runnable{
     private int totalCycles = 0;
     private int currentPeopleInfected = 0;
     private int currentPeopleImmune = 0;
-    private int xPos[];         
-    private int xVel[];         
+    private int xPos[];                             //each bit of these arrays corresponds to a person, and their position/velocity. This is so
+    private int xVel[];                             //I can create as many I want by changing the population
     private int yPos[];
     private int yVel[];
     private boolean infected[];         //boolean for if the person is infected or not
@@ -56,6 +56,7 @@ public class Grapher implements Runnable{
     }
     private void initialize(){
         boolean inputCheck;
+        System.out.println("note: green = healthy, blue = immune, red = infected.");
         System.out.println("do you want to have each individual data point printed, for use in plotting with excel? input 'true' to have all data points printed.");
         printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each data point
         System.out.println("note: enter -1 for default value, width/height must be more than 300.");
@@ -77,31 +78,31 @@ public class Grapher implements Runnable{
                 Integer temp = null;
                 do{
                     try{
-                        temp = Integer.parseInt(input.nextLine());
+                        temp = Integer.parseInt(input.nextLine());                  //set temp to be the users input for input checking purposes
                     }catch(NumberFormatException e){
                         System.out.println("invalid input, try again :D");          //if they do not type a number, then ask them to put in a different number.
                     }
                 } while (temp == null);
                 if(temp > 0){ //input checking
                     if(z == 1 || z == 2){                       // if the input is for the width (1 in my array of settings) or height (2 in my array of settings)
-                        if(temp >= 300){
+                        if(temp >= 600){                        // and it is inside the bounds, set the preferences value corresponding to the width/height to the temporary value.
                             prefs.vars[z] = temp;
                         }else{
-                            System.out.println("sorry, width/height cannot be less than 300, please enter a value at or above 60.");
+                            System.out.println("sorry, width/height cannot be less than 600, please enter a value at or above 600.");
                             z--;                              //move the array back one, asking again
                         }
                     }else {
                         prefs.vars[z] = temp;
                     }
                     if(z==8){
-                        if(temp<=100 && temp>=0){
+                        if(temp<=100 && temp>=0){       //same method, if the infection chance is not in the wanted range then we ask again for the value of the infection chance.
                             System.out.println("sorry, infection chance must be more than  or equal to 0 and must be less than or equal to 100, please enter a value accordingly.");
                             z--;                              //move the array back one, asking again
                         }
                     }
                 }else{
-                    System.out.println("Please enter a number above 0, or -1 to use default");
-                    z--;
+                    System.out.println("Please enter a number above 0, or -1 to use default"); //if the input is not above 0, or is not equal to -1, then ask the user to enter the 
+                    z--;                                                                       //number again.
                 }
             }
         }
@@ -111,8 +112,8 @@ public class Grapher implements Runnable{
         display = new Display(prefs.vars[1], prefs.vars[2]);
         //ControlPanel control = new ControlPanel();
 
-        xPos = new int[prefs.vars[0]]; //create all my arrays to be full of people
-        yPos = new int[prefs.vars[0]];
+        xPos = new int[prefs.vars[0]]; //create all my arrays to be full of people using the preferences value for the desired population.
+        yPos = new int[prefs.vars[0]]; //prefs.vars[0] is the population setting
         xVel = new int[prefs.vars[0]];
         yVel = new int[prefs.vars[0]];
         infected = new boolean[prefs.vars[0]];
@@ -124,11 +125,11 @@ public class Grapher implements Runnable{
             yPos[i] = ThreadLocalRandom.current().nextInt(1, prefs.vars[2] - OVAL_DIAM);
             xVel[i] = ThreadLocalRandom.current().nextInt(MIN_VEL, MAX_VEL);
             yVel[i] = ThreadLocalRandom.current().nextInt(MIN_VEL, MAX_VEL);
-            infected[i] = false;
+            infected[i] = false;//set everyone to initially be healthy and not immune.
             infectedTime[i] = 0;
             immune[i] = false;
-            for(int q = 0; q < prefs.vars[0]; q++){
-                for(int y = 0; y < prefs.vars[0]; y++){    
+            for(int q = 0; q < prefs.vars[0]; q++){         //this code is to make sure no one is initially overlapping with each other by checking if the distance between them is 
+                for(int y = 0; y < prefs.vars[0]; y++){     //less than the diameter of the people.
                     dx = (xPos[q] + OVAL_DIAM*0.5) - (xPos[y] + OVAL_DIAM*0.5); //find difference in x
                     dy = (yPos[q] + OVAL_DIAM*0.5) - (yPos[y] + OVAL_DIAM*0.5); //find difference in y
                     distance = Math.sqrt(dx * dx + dy * dy); //find distance between using pythag
@@ -145,7 +146,7 @@ public class Grapher implements Runnable{
             totalPeopleInfected++;
             currentPeopleInfected++;
         }
-        theChart = new Charter("Real-Time XChart", "# of cycles", "# of people", "people infected", 0, 0);
+        theChart = new Charter("Infection chart", "# of cycles", "# of people", "people infected", 0, 0); //create the chart with the appropriate axis titles
     }
 
     private void tickRun(){
@@ -239,15 +240,16 @@ public class Grapher implements Runnable{
                 if(printPrefs){     //if they want each data point printed, do so.
                     System.out.println(totalCycles + " cycles " + currentPeopleInfected + " people infected currently " + currentPeopleImmune + " people immune currently " + (prefs.vars[0] - currentPeopleInfected) + " people healthy currently");
                 }
-                theChart.addNewData(totalCycles, currentPeopleInfected);//update the chart to have the new datapoint
+                theChart.addNewData(totalCycles, currentPeopleInfected);//update the chart to have the new datapoint corresponding to the current cycle
                 long endTime = System.nanoTime();
-                long processTime = endTime - startTime;
-                long timeToWait = FRAME_TIME - processTime;
-                if(timeToWait <= 0){            //if the time to wait is less than or equal to 0 then the simulation is taking longer than allowed to run, so the program will stop.
+                long processTime = endTime - startTime;  //the way that this bit of code works is by taking the start time, end time, and, in order to maintain a consistent frame time, waiting
+                long timeToWait = FRAME_TIME - processTime;//for the rest of the time required to have a consistent frame time, by taking the desired frame time and subtracting the time 
+                                                           //the program took to process. This ensures that the program waits for the same time each time.
+                if(timeToWait <= 0){            //if the time to wait is less than or equal to 0 then the simulation is taking longer than allowed to run.
                     System.out.println("uh oh something has gone wrong, the simulation is taking too long");
                     timeToWait = 0;
                 }
-                timeToWait = timeToWait/1000000; //convert to milliseconds
+                timeToWait = timeToWait/1000000; //convert to milliseconds from nanoseconds
                 Thread.sleep(timeToWait);       //sleep for the time to wait, so that frame rate is constant
                 render();
             } catch (Exception e) {
@@ -262,7 +264,7 @@ public class Grapher implements Runnable{
     }
 
     private void render(){
-        int smileAngle;
+        int smileAngle; //initalise the properties of the smiles inside this scope (they are not used anywhere else)
         int smileYPos;
         int smileWidth;
         int smileHeight;
@@ -279,30 +281,29 @@ public class Grapher implements Runnable{
         g.clearRect(0, 0, 2500, 2500);              //clear all drawing on the screen
 
         //draw people
-        for(int i = 0; i < prefs.vars[0]; i++){
+        for(int i = 0; i < prefs.vars[0]; i++){  //loop for all the people
             g.setColor(Color.black);
-            g.fillOval(xPos[i], yPos[i], OVAL_DIAM, OVAL_DIAM);
-            if(infected[i]){
-                g.setColor(Color.red);
+            g.fillOval(xPos[i], yPos[i], OVAL_DIAM, OVAL_DIAM);     //create the persons body
+            if(infected[i]){                                        //this runs through all of the states that the person can be in and makes their smile/face the corresponding color/orientation
+                g.setColor(Color.red);          //infected = red
                 smileAngle = 0;                 //set smile angle/pos so that it is a sad face
                 smileYPos = yPos[i]+25;
-                smileWidth = ((OVAL_DIAM*6)/10);
+                smileWidth = ((OVAL_DIAM*6)/10); //all smile proportions/eye proportions are based on the diameter of the person, for resizability.
                 smileHeight = (OVAL_DIAM*4)/12;
             }else if(immune[i]){
-                g.setColor(Color.blue);
+                g.setColor(Color.blue);         //immune = blue
                 smileAngle = 180;               //set smile angle/pos so that it is a happy face
                 smileYPos = yPos[i]+10;
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*6)/10;
             }else{
-                g.setColor(Color.green);
+                g.setColor(Color.green);        //healthy = green
                 smileAngle = 180;               //set smile angle/pos so that it is a happy face
                 smileYPos = yPos[i]+10;
                 smileWidth = ((OVAL_DIAM*6)/10);
                 smileHeight = (OVAL_DIAM*6)/10;
             }
             g.fillOval(xPos[i] + (OVAL_DIAM/20), yPos[i] + ((OVAL_DIAM/10)/2), OVAL_DIAM*9/10, OVAL_DIAM*9/10);         //draw the oval
-            //g.setStroke(new BasicStroke(1));
             g.setColor(Color.black);
             g.fillOval(xPos[i]+(OVAL_DIAM/4), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);                      //draw the eyes
             g.fillOval(xPos[i]+((OVAL_DIAM*3)/5), yPos[i]+(OVAL_DIAM/5), EYE_WIDTH, EYE_HEIGHT);
