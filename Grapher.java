@@ -59,7 +59,7 @@ public class Grapher implements Runnable{
         System.out.println("note: green = healthy, blue = immune, red = infected.");
         System.out.println("do you want to have each individual data point printed, for use in plotting with excel? input 'true' to have all data points printed.");
         printPrefs = Boolean.parseBoolean(input.nextLine());        //get a boolean from the user, if they user types anything but true the does not print each data point
-        System.out.println("note: enter -1 for default value, width/height must be more than 300.");
+        System.out.println("note: enter -1 for default value, width/height must be more than 600.");
         System.out.println("presets are: population size of 10, world width of 600, world height of 600, run for 3000 cycles, 1 person to start infected,");
         System.out.println("people are infected for 300 cycles before being cured, and are immune for 250 cycles after being cured");
         System.out.println("default infection chance is 100%");
