@@ -238,7 +238,7 @@ public class Grapher implements Runnable{
                     }
                 }
                 if(printPrefs){     //if they want each data point printed, do so.
-                    System.out.println(totalCycles + " cycles " + currentPeopleInfected + " people infected currently " + currentPeopleImmune + " people immune currently " + (prefs.vars[0] - currentPeopleInfected) + " people healthy currently");
+                    System.out.println(totalCycles + " cycles " + currentPeopleInfected + " people infected currently " + (prefs.vars[0] - currentPeopleInfected) + " people healthy currently");
                 }
                 theChart.addNewData(totalCycles, currentPeopleInfected);//update the chart to have the new datapoint corresponding to the current cycle
                 long endTime = System.nanoTime();
